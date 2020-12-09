@@ -3,7 +3,7 @@ import config from '../config';
 import readFromFile from './read_file';
 import {readSolutionDay} from './read_arguments';
 
-const readInput = (strategy: ParsingStrategy): string => {
+const readInput = (strategy: ParsingStrategy): any => {
   const day = readSolutionDay();
   const filePath = config.inputDirectoryPath(day);
   const rawInput = readFromFile(filePath);
