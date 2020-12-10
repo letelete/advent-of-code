@@ -15,7 +15,7 @@
   },
   "scripts": {
     "start": "rimraf dist && tsc && ts-node .",
-    "test": "rimraf dist && ([[ -z $npm_config_day ]] && echo \"No --day=NUMBER specified, so running all tests\" && jest) || (jest ./src/days/day_$npm_config_day)"
+    "test": "sh ./run_tests.sh $npm_config_day"
   },
   "repository": {
     "type": "git",
