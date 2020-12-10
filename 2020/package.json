@@ -3,9 +3,19 @@
   "version": "1.0.0",
   "description": "My Advent of Code 2020 solutions",
   "main": "dist/index.js",
+  "jest": {
+    "preset": "ts-jest",
+    "transform": {
+      "node_modules/variables/.+\\.(j|t)sx?$": "ts-jest"
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!variables/.*)"
+    ],
+    "testRegex": ".\\.test\\.tsx?$"
+  },
   "scripts": {
     "start": "rimraf dist && tsc && ts-node .",
-    "test": "jest"
+    "test": "rimraf dist && ([[ -z $npm_config_day ]] && echo \"No --day=NUMBER specified, so running all tests\" && jest) || (jest ./src/days/day_$npm_config_day)"
   },
   "repository": {
     "type": "git",

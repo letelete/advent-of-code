@@ -1,6 +1,6 @@
 import config from '../config';
 
-export const readSolutionDay = (): number => {
+export const readSolutionDayNumber = (): number => {
   const day = Number(process.env.npm_config_day ?? config.aocFirstDay);
   if (day < config.aocFirstDay || day > config.aocLastDay) {
     throw new Error(

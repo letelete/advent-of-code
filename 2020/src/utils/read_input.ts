@@ -1,13 +1,9 @@
-import ParsingStrategy from '../interfaces/parsing_strategy.interface';
 import config from '../config';
 import readFromFile from './read_file';
-import {readSolutionDay} from './read_arguments';
 
-const readInput = (strategy: ParsingStrategy): any => {
-  const day = readSolutionDay();
+const readInput = (day: number): string => {
   const filePath = config.inputDirectoryPath(day);
-  const rawInput = readFromFile(filePath);
-  return rawInput && strategy(rawInput);
+  return readFromFile(filePath);
 };
 
 export default readInput;
