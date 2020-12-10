@@ -1,15 +1,13 @@
 import Day from '../../interfaces/day.interface';
-import readInput from '../../utils/read_input';
+import DayInput from '../../interfaces/day_input.interface';
 
 interface SortedEntry {
   value: number;
   index: number;
 }
 
-const day9 = (): Day => {
-  const data: number[] = readInput(str =>
-    str.split(/\n/).map(num => parseInt(num))
-  );
+const day9: Day = (input: DayInput) => {
+  const data: number[] = input.split(/\n/).map(num => parseInt(num));
 
   const sortedData = data
     .map((value, index): SortedEntry => ({value, index}))
@@ -75,7 +73,7 @@ const day9 = (): Day => {
     return Math.min(...sumSet) + Math.max(...sumSet);
   };
 
-  return {solutions: [partOne, partTwo]};
+  return [partOne, partTwo];
 };
 
 export default day9;
