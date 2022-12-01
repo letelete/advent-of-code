@@ -11,7 +11,8 @@ fn main() {
 }
 
 fn tests() {
-    let input = "199
+    let input = parse_input(
+        &"199
 200
 208
 210
@@ -20,16 +21,17 @@ fn tests() {
 240
 269
 260
-263";
+263",
+    );
     {
         let expected = 7;
-        let actual = parse_input(&input);
-        assert_eq!(expected, solve(&actual, 1))
+        let actual = solve(&input, 1);
+        assert_eq!(expected, actual);
     }
     {
         let expected = 5;
-        let actual = parse_input(&input);
-        assert_eq!(expected, solve(&actual, 3))
+        let actual = solve(&input, 3);
+        assert_eq!(expected, actual);
     }
 }
 

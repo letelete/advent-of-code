@@ -55,7 +55,7 @@ ask_yes_no() {
 
 # $1 - aoc day number
 get_day_name() {
-    FILE_NAME="$(printf "%02d" $1)"
+    FILE_NAME="$(printf "day-%02d" $1)"
     echo $FILE_NAME
 }
 
