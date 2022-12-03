@@ -195,7 +195,7 @@ stage_day() {
     DAY_NAME="$(get_day_name $1)"
     DAY_PATH="$(get_day_path $1)"
     print $TEXT_INFO "Commiting AoC day $DAY_NAME at $DAY_PATH"
-    git add "$DAY_PATH" && git commit -m "Add day $DAY_NAME of year $YEAR $(get_xmas_emoji)"
+    git add "$DAY_PATH" && git commit -m "Add day $1 of year $YEAR $(get_xmas_emoji)"
 }
 
 # --- begin options parsing ---
