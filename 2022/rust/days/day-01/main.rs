@@ -49,7 +49,11 @@ fn part_1(input: &Vec<i32>) -> i32 {
 }
 
 fn part_2(input: &Vec<i32>) -> i32 {
-    input.clone().into_iter().sorted().collect::<Vec<i32>>()[input.len() - 3..]
+    input
+        .clone()
+        .into_iter()
+        .sorted_unstable_by(|a, b| b.cmp(a))
+        .collect::<Vec<i32>>()[0..3]
         .iter()
         .sum()
 }
