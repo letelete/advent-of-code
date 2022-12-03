@@ -154,12 +154,25 @@ create_day() {
     create_input_data $1
 }
 
-# $1 - aoc day number
-run_day() {
+#  $1 - aoc day number
+run_day_in_dedicated_env() {
     FILE_NAME="$(get_file_name $1)"
     FILE_PATH="$(get_file_path $1)"
+    DAY_PATH="$(get_day_path $1)"
+
+    CARGO_MANIFEST_PATH="$DAY_PATH/Cargo.toml"
+
+    if [ -f $CARGO_MANIFEST_PATH ]; then
+        print $TEXT_INFO_SECONDARY 'A Cargo manifest file found at "$CARGO_MANIFEST_PATH" - running with cargo...' && cargo run --manifest-path $CARGO_MANIFEST_PATH
+    else
+        print $TEXT_INFO_SECONDARY 'No cargo manifest file found at "$CARGO_MANIFEST_PATH" - running with rustc' && rustc $FILE_PATH && echo $(./$FILE_NAME) && rm $FILE_NAME
+    fi
+}
+
+# $1 - aoc day number
+run_day() {
     print $TEXT_INFO "Running day $(get_day_name $1) at $FILE_PATH$"
-    rustc "$FILE_PATH" && echo "$(./$FILE_NAME)" && rm "$FILE_NAME"
+    run_day_in_dedicated_env $1
 }
 
 list_days() {
