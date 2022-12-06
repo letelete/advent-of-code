@@ -18,6 +18,16 @@ RUST_TEMPLATE="""fn main() {
   let l = include_str!(\"./$INPUT_FILE\").lines();
   println!(\"{:?}\", l);
 }"""
+
+JS_TEMPLATE="""const fs = require('fs');
+
+const parse = (source) => source.split('\\\n').filter(Boolean);
+
+const data = parse(fs.readFileSync('$INPUT_FILE', 'utf-8'));
+
+const test = parse(\`\`);
+
+console.log(test);"""
 # --- end templates ---
 
 # $1 Formatter
@@ -77,8 +87,19 @@ get_file() {
 }
 
 # $1 - aoc day number
+get_js_file() {
+    FILE="$(get_file_name).js"
+    echo $FILE
+}
+
+# $1 - aoc day number
 get_file_path() {
     FILE_PATH="$(get_day_path $1)/$(get_file $1)"
+    echo $FILE_PATH
+}
+
+get_js_file_path() {
+    FILE_PATH="$(get_day_path $1)/$(get_js_file $1)"
     echo $FILE_PATH
 }
 
@@ -139,6 +160,7 @@ create_input_data() {
 create_day() {
     DAY_NAME="$(get_day_name $1)"
     FILE_PATH="$(get_file_path $1)"
+    JS_FILE_PATH="$(get_js_file_path $1)"
     INPUT_PATH="$(get_input_path $1)"
     DAY_PATH="$(get_day_path $1)"
 
@@ -151,6 +173,7 @@ create_day() {
     fi
 
     echo "$RUST_TEMPLATE" >$FILE_PATH
+    echo "$JS_TEMPLATE" >$JS_FILE_PATH
     create_input_data $1
 }
 
