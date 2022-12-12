@@ -8,15 +8,43 @@ TEXT_DEFAULT="$(tput sgr0)"
 YEAR=2022
 EDITOR="code"
 INPUT_FILE="in.txt"
+TEST_INPUT_FILE="test.txt"
 
 DAYS_PATH="./days"
 API_URL="https://adventofcode.com"
 # --- end config ---
 
 # --- begin templates ---
-RUST_TEMPLATE="""fn main() {
-  let l = include_str!(\"./$INPUT_FILE\").lines();
-  println!(\"{:?}\", l);
+RUST_TEMPLATE="""type Input = i32;
+
+fn main() {
+    let input = parse_input(&std::include_str!("$INPUT_FILE"));
+
+    tests();
+
+    println!("{}", part_1(&input));
+    println!("{}", part_2(&input));
+}
+
+fn tests() {
+    let input = parse_input(&std::include_str!("$TEST_INPUT_FILE"));
+
+    {
+        let expected = 0;
+        let actual = part_1(&parse_input(&input));
+        assert_eq!(expected, actual);
+    }
+    {
+        let expected = 0;
+        let actual = part_2(&parse_input(&input));
+        assert_eq!(expected, actual);
+    }
+}
+
+fn parse_input(input: &str) -> Input {
+    input
+        .split("\n\n")
+        .collect::<Vec<i32>>()
 }"""
 
 JS_TEMPLATE="""const fs = require('fs');
@@ -24,8 +52,7 @@ JS_TEMPLATE="""const fs = require('fs');
 const parse = (source) => source.split('\\\n').filter(Boolean);
 
 const data = parse(fs.readFileSync('$INPUT_FILE', 'utf-8'));
-
-const test = parse(\`\`);
+const test = parse(fs.readFileSync('$TEST_INPUT_FILE', 'utf-8'));
 
 console.log(test);"""
 # --- end templates ---
@@ -98,14 +125,22 @@ get_file_path() {
     echo $FILE_PATH
 }
 
+# $1 - aoc day number
 get_js_file_path() {
     FILE_PATH="$(get_day_path $1)/$(get_js_file $1)"
     echo $FILE_PATH
 }
 
+# $1 - aoc day number
 get_input_path() {
     INPUT_PATH="$(get_day_path $1)/$INPUT_FILE"
     echo $INPUT_PATH
+}
+
+# $1 - aoc day number
+get_test_path() {
+    TEST_INPUT_PATH="$(get_day_path $1)/$TEST_INPUT_FILE"
+    echo $TEST_INPUT_PATH
 }
 
 # Reads ENV variable AOC_SESSION_COOKIE
@@ -152,8 +187,10 @@ create_input_data() {
     ENDPOINT="$API_URL/$YEAR/day/$1/input"
     SESSION_COOKIE="$(get_session_cookie)"
     INPUT_PATH=$(get_input_path $1)
+    TEST_INPUT_PATH=$(get_test_path $1)
 
     echo "$(curl -s -H "Accept: application/json" --cookie "session=$(get_session_cookie)" $ENDPOINT)" >$INPUT_PATH
+    touch $TEST_INPUT_PATH
 }
 
 # $1 - aoc day number
@@ -161,7 +198,6 @@ create_day() {
     DAY_NAME="$(get_day_name $1)"
     FILE_PATH="$(get_file_path $1)"
     JS_FILE_PATH="$(get_js_file_path $1)"
-    INPUT_PATH="$(get_input_path $1)"
     DAY_PATH="$(get_day_path $1)"
 
     if [ -f $FILE_PATH ]; then
