@@ -8,7 +8,8 @@ TEXT_DEFAULT="$(tput sgr0)"
 YEAR=2023
 EDITOR="code"
 INPUT_FILE="in.txt"
-TEST_INPUT_FILE="test.txt"
+TEST_ONE_INPUT_FILE="test.one.txt"
+TEST_TWO_INPUT_FILE="test.two.txt"
 
 DAYS_PATH="./days"
 API_URL="https://adventofcode.com"
@@ -19,21 +20,29 @@ CODE_TEMPLATE="""const fs = require('fs');
 
 const parse = (source) => source.split('\\\n').filter(Boolean);
 
-const data = parse(fs.readFileSync('$INPUT_FILE', 'utf-8'));
-const test = parse(fs.readFileSync('$TEST_INPUT_FILE', 'utf-8'));
+const data = parse(fs.readFileSync('in.txt', 'utf-8'));
+const testOne = parse(fs.readFileSync('test.one.txt', 'utf-8'));
+const testTwo = parse(fs.readFileSync('test.two.txt', 'utf-8'));
 
-const partOne = () => {
+Array.prototype.sum = function () {
+  return this.reduce((sum, value) => sum + value, 0);
+};
 
-}
+Array.prototype.product = function () {
+  return this.reduce((x, value) => x * value, 1);
+};
 
-const partTwo = () => {
+const partOne = (data) => {};
 
-}
+const partTwo = (data) => {};
 
-console.log('\\\x1b[31m---BEGIN DATA---\\\x1b[0m\\\n', data, '\\\n\\\x1b[31m---END DATA---\\\x1b[0m\\\n');
-console.log('\\\x1b[31m---BEGIN TEST---\\\x1b[0m\\\n', test, '\\\n\\\x1b[31m---END TEST---\\\x1b[0m\\\n');
-console.log('\\\x1b[42m---BEGIN PART ONE ---\\\x1b[0m\\\n', partOne(), '\\\n\\\x1b[42m---END PART ONE ---\\\x1b[0m\\\n');
-console.log('\\\x1b[42m---BEGIN PART TWO ---\\\x1b[0m\\\n', partTwo(), '\\\n\\\x1b[42m---END PART TWO ---\\\x1b[0m\\\n');"""
+console.log('\\\x1b[31m--- DATA---\\\x1b[0m\\\n', data);
+console.log('\\\x1b[31m--- TEST PART ONE ---\\\x1b[0m\\\n', partOne(testOne));
+console.log('\\\x1b[31m--- TEST PART TWO ---\\\x1b[0m\\\n', partTwo(testTwo));
+console.log();
+console.log('\\\x1b[31m--- PART ONE ---\\\x1b[0m\\\n', partOne(data));
+console.log('\\\x1b[31m--- PART TWO ---\\\x1b[0m\\\n', partTwo(data));
+"""
 # --- END TEMPLATE --
 
 # $1 Formatter
@@ -105,8 +114,14 @@ get_input_path() {
 }
 
 # $1 - aoc day number
-get_test_path() {
-    TEST_INPUT_PATH="$(get_day_path $1)/$TEST_INPUT_FILE"
+get_test_one_path() {
+    TEST_INPUT_PATH="$(get_day_path $1)/$TEST_ONE_INPUT_FILE"
+    echo $TEST_INPUT_PATH
+}
+
+# $1 - aoc day number
+get_test_two_path() {
+    TEST_INPUT_PATH="$(get_day_path $1)/$TEST_TWO_INPUT_FILE"
     echo $TEST_INPUT_PATH
 }
 
@@ -154,10 +169,12 @@ create_input_data() {
     ENDPOINT="$API_URL/$YEAR/day/$1/input"
     SESSION_COOKIE="$(get_session_cookie)"
     INPUT_PATH=$(get_input_path $1)
-    TEST_INPUT_PATH=$(get_test_path $1)
+    TEST_ONE_INPUT_PATH=$(get_test_one_path $1)
+    TEST_TWO_INPUT_PATH=$(get_test_two_path $1)
 
     echo "$(curl -s -H "Accept: application/json" --cookie "session=$(get_session_cookie)" $ENDPOINT)" >$INPUT_PATH
-    touch $TEST_INPUT_PATH
+    touch $TEST_ONE_INPUT_PATH
+    touch $TEST_TWO_INPUT_PATH
 }
 
 # $1 - aoc day number
