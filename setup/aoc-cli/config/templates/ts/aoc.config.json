@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "setup": "pnpm install",
+    "test": "pnpm test",
+    "solve": "pnpm start"
+  }
+}
