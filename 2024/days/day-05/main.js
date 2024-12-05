@@ -22,10 +22,7 @@ const compare = (rules) => (a, b) => {
   if (!rule) {
     return 0;
   }
-  if (rule[0] === a) {
-    return -1;
-  }
-  return 1;
+  return rule[0] === a ? -1 : 1;
 };
 
 const partOne = (data) => {
