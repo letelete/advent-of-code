@@ -5,50 +5,16 @@ TEXT_ERROR="$(tput rev)$(tput setaf 196)"
 TEXT_DEFAULT="$(tput sgr0)"
 
 # --- BEGIN CONFIG ---
-YEAR=2024
+YEAR="2024"
 EDITOR="code"
 INPUT_FILE="in.txt"
-TEST_ONE_INPUT_FILE="test.one.txt"
-TEST_TWO_INPUT_FILE="test.two.txt"
+TEMPLATE_FILE="template.js"
+SAMPLE_INPUT_FILE="in.sample.txt"
 
 DAYS_PATH="./days"
 API_URL="https://adventofcode.com"
 # --- END CONFIG ---
 
-# --- BEGIN TEMPLATE ---
-CODE_TEMPLATE="""const fs = require('fs');
-
-const parse = (source) => source.split('\\\n').filter(Boolean);
-
-Array.prototype.sum = function () {
-  return this.reduce((sum, value) => sum + value, 0);
-};
-
-Array.prototype.product = function () {
-  return this.reduce((x, value) => x * value, 1);
-};
-
-Array.prototype.equals = function (arr) {
-  return this.every((e, i) => e === arr[i]);
-};
-
-const partOne = (data) => {};
-
-const partTwo = (data) => {};
-
-
-const data = parse(fs.readFileSync('in.txt', 'utf-8'));
-const testOne = parse(fs.readFileSync('test.one.txt', 'utf-8'));
-const testTwo = parse(fs.readFileSync('test.two.txt', 'utf-8'));
-
-console.log('\\\x1b[31m--- DATA---\\\x1b[0m\\\n', data);
-console.log('\\\x1b[31m--- TEST PART ONE ---\\\x1b[0m\\\n', partOne(testOne));
-console.log('\\\x1b[31m--- TEST PART TWO ---\\\x1b[0m\\\n', partTwo(testTwo));
-console.log();
-console.log('\\\x1b[31m--- PART ONE ---\\\x1b[0m\\\n', partOne(data));
-console.log('\\\x1b[31m--- PART TWO ---\\\x1b[0m\\\n', partTwo(data));
-"""
-# --- END TEMPLATE --
 
 # $1 Formatter
 # $2 Message
@@ -119,8 +85,8 @@ get_input_path() {
 }
 
 # $1 - aoc day number
-get_test_one_path() {
-    TEST_INPUT_PATH="$(get_day_path $1)/$TEST_ONE_INPUT_FILE"
+get_sample_input_path() {
+    TEST_INPUT_PATH="$(get_day_path $1)/$SAMPLE_INPUT_FILE"
     echo $TEST_INPUT_PATH
 }
 
@@ -174,12 +140,10 @@ create_input_data() {
     ENDPOINT="$API_URL/$YEAR/day/$1/input"
     SESSION_COOKIE="$(get_session_cookie)"
     INPUT_PATH=$(get_input_path $1)
-    TEST_ONE_INPUT_PATH=$(get_test_one_path $1)
-    TEST_TWO_INPUT_PATH=$(get_test_two_path $1)
+    SAMPLE_INPUT_FILE=$(get_sample_input_path $1)
 
     echo "$(curl -s -H "Accept: application/json" --cookie "session=$(get_session_cookie)" $ENDPOINT)" >$INPUT_PATH
-    touch $TEST_ONE_INPUT_PATH
-    touch $TEST_TWO_INPUT_PATH
+    touch $SAMPLE_INPUT_FILE
 }
 
 # $1 - aoc day number
@@ -196,7 +160,7 @@ create_day() {
         mkdir $DAY_PATH
     fi
 
-    echo "$CODE_TEMPLATE" >$FILE_PATH
+    cp "./$TEMPLATE_FILE" $FILE_PATH
     create_input_data $1
 }
 
