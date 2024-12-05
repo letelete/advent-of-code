@@ -20,10 +20,6 @@ CODE_TEMPLATE="""const fs = require('fs');
 
 const parse = (source) => source.split('\\\n').filter(Boolean);
 
-const data = parse(fs.readFileSync('in.txt', 'utf-8'));
-const testOne = parse(fs.readFileSync('test.one.txt', 'utf-8'));
-const testTwo = parse(fs.readFileSync('test.two.txt', 'utf-8'));
-
 Array.prototype.sum = function () {
   return this.reduce((sum, value) => sum + value, 0);
 };
@@ -32,9 +28,18 @@ Array.prototype.product = function () {
   return this.reduce((x, value) => x * value, 1);
 };
 
+Array.prototype.equals = function (arr) {
+  return this.every((e, i) => e === arr[i]);
+};
+
 const partOne = (data) => {};
 
 const partTwo = (data) => {};
+
+
+const data = parse(fs.readFileSync('in.txt', 'utf-8'));
+const testOne = parse(fs.readFileSync('test.one.txt', 'utf-8'));
+const testTwo = parse(fs.readFileSync('test.two.txt', 'utf-8'));
 
 console.log('\\\x1b[31m--- DATA---\\\x1b[0m\\\n', data);
 console.log('\\\x1b[31m--- TEST PART ONE ---\\\x1b[0m\\\n', partOne(testOne));
