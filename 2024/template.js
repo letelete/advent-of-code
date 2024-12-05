@@ -18,9 +18,9 @@ Array.prototype.equals = function (arr) {
   );
 };
 
-function partOne(data) {}
+function part1(data) {}
 
-function partTwo(data) {}
+function part2(data) {}
 
 /* -------------------------------------------------------------------------------------------------
  * Read Input & Print Output boilerplate

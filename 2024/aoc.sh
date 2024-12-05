@@ -1,247 +1,180 @@
+#!/usr/bin/env bash
+
+# --- Constants ---
+AOC_INPUT_FILE="in.txt"
+AOC_SAMPLE_INPUT_FILE="in.sample.txt"
+AOC_TEMPLATE_FILE="template.js"
+AOC_DAYS_PATH="./days"
+
+# --- Theme ---
 TEXT_AOC="$(tput rev)$(tput setaf 206)"
 TEXT_INFO="$(tput bold)$(tput setaf 15)"
 TEXT_INFO_SECONDARY="$(tput setaf 255)"
 TEXT_ERROR="$(tput rev)$(tput setaf 196)"
 TEXT_DEFAULT="$(tput sgr0)"
 
-# --- BEGIN CONFIG ---
-YEAR="2024"
-EDITOR="code"
-INPUT_FILE="in.txt"
-TEMPLATE_FILE="template.js"
-SAMPLE_INPUT_FILE="in.sample.txt"
-
-DAYS_PATH="./days"
-API_URL="https://adventofcode.com"
-# --- END CONFIG ---
-
-
-# $1 Formatter
-# $2 Message
+# --- Functions ---
 print() {
     echo "${TEXT_AOC}[aoc]${TEXT_DEFAULT} $1$2${TEXT_DEFAULT}"
 }
 
-# Returns pseudo-randomly generated christmass emoji. Don't ask questions. It's important, ok?
 get_xmas_emoji() {
-    EMOJIS=("👼" "🎅" "🤶" "🧑‍🎄" "🧝" "🧝‍♂️" "🧝‍♀️" "🦌" "🍪" "🥛" "🌟" "❄️" "⛄" "🎄" "🎁" "🔔" "🎶" "🕯️")
-    EMOJIS_LEN=${#EMOJIS[@]}
-    MAX_INDEX=$((EMOJIS_LEN - 1))
-    RAND_INDEX="$(shuf -i 0-$MAX_INDEX -n 1)"
-    echo "${EMOJIS[$RAND_INDEX]}"
+    local emojis=("🎅" "🤶" "🧑‍🎄" "👼" "🧝" "🧝‍♂️" "🧝‍♀️" "🦌" "🎄" "🌟" "❄️" "⛄" "🎁" "🔔" "🎶" "🕯️" "🍪" "🥛" "🎂" "🦃" "🧦" "🎉")
+    echo "${emojis[RANDOM % ${#emojis[@]}]}"
 }
 
-# $1 Yes message
-# $2 No message
-# Returns "yes" if ($1) selected, "no" otherwise.
 ask_yes_no() {
-    select answer in "$1", "$2"; do
+    select answer in "$1" "$2"; do
         case $answer in
-        "$1,")
-            echo "yes"
-            break
-            ;;
-        "$2")
-            echo "no"
-            break
-            ;;
+        "$1") echo "yes"; break ;;
+        "$2") echo "no"; break ;;
         esac
     done
 }
 
-# $1 - aoc day number
-get_day_name() {
-    FILE_NAME="$(printf "day-%02d" $1)"
-    echo $FILE_NAME
-}
-
-# $1 - aoc day number
-get_day_path() {
-    DAY_PATH="$DAYS_PATH/$(get_day_name $1)"
-    echo $DAY_PATH
-}
-
-get_file_name() {
-    FILE_NAME="main"
-    echo $FILE_NAME
-}
-
-# $1 - aoc day number
-get_file() {
-    FILE="$(get_file_name).js"
-    echo $FILE
-}
-
-# $1 - aoc day number
-get_file_path() {
-    FILE_PATH="$(get_day_path $1)/$(get_file $1)"
-    echo $FILE_PATH
-}
-
-# $1 - aoc day number
-get_input_path() {
-    INPUT_PATH="$(get_day_path $1)/$INPUT_FILE"
-    echo $INPUT_PATH
-}
-
-# $1 - aoc day number
-get_sample_input_path() {
-    TEST_INPUT_PATH="$(get_day_path $1)/$SAMPLE_INPUT_FILE"
-    echo $TEST_INPUT_PATH
-}
-
-# $1 - aoc day number
-get_test_two_path() {
-    TEST_INPUT_PATH="$(get_day_path $1)/$TEST_TWO_INPUT_FILE"
-    echo $TEST_INPUT_PATH
-}
-
-# Reads ENV variable AOC_SESSION_COOKIE
-get_session_cookie() {
-    echo "$AOC_SESSION_COOKIE"
-}
+get_day_name() { printf "day-%02d" "$1"; }
+get_day_path() { echo "$AOC_DAYS_PATH/$(get_day_name "$1")"; }
+get_file_path() { echo "$(get_day_path "$1")/main.js"; }
+get_input_path() { echo "$(get_day_path "$1")/$AOC_INPUT_FILE"; }
+get_sample_input_path() { echo "$(get_day_path "$1")/$AOC_SAMPLE_INPUT_FILE"; }
 
 help() {
-    echo
     print $TEXT_INFO "Usage: [-r|--run <arg>] [-a|--add <arg>] [-c|--code <arg>] [-s|--stage <arg>] [-l|--list] [-h|--help]"
-    OPTIONS=(
+    local options=(
         "-r | --run   <DAY_NUMBER>           Executes given AoC day."
         "-a | --add   <DAY_NUMBER>           Adds a new AoC day."
-        "-c | --code  <DAY_NUMBER>           Opens given AoC day in selected code editor (current: $EDITOR)."
-        "-s | --stage <DAY_NUMBER>           Git commits given AoC day adding some christmass touch $(get_xmas_emoji)."
+        "-c | --code  <DAY_NUMBER>           Opens given AoC day in $AOC_EDITOR."
+        "-s | --stage <DAY_NUMBER>           Git commits given AoC day adding some christmas touch $(get_xmas_emoji)."
         "-l | --list                         Lists all created AoC days."
         "-h | --help                         Prints help page."
     )
     print $TEXT_INFO_SECONDARY "Options:"
-    for ((i = 0; i < ${#OPTIONS[@]}; i++)); do
-        print $TEXT_INFO_SECONDARY "${OPTIONS[$i]}"
+    for option in "${options[@]}"; do
+        print $TEXT_INFO_SECONDARY "$option"
     done
-    echo
 }
 
-# $1 - aoc day number
 ask_to_override() {
-    DAY_NAME="$(get_day_name $1)"
-    YES_MSG="Yes, override already existing day $DAY_NAME"
-    NO_MSG="No, abort"
-    case "$(ask_yes_no "$YES_MSG" "$NO_MSG")" in
-    "yes")
-        print $TEXT_INFO "Overriding day $DAY_NAME..."
-        ;;
-    "no")
-        print $TEXT_INFO "Exiting..."
-        exit 0
-        ;;
+    local day_name=$(get_day_name "$1")
+    local yes_msg="Yes, override already existing day $day_name"
+    local no_msg="No, abort"
+    case "$(ask_yes_no "$yes_msg" "$no_msg")" in
+    "yes") print $TEXT_INFO "Overriding day $day_name..." ;;
+    "no") print $TEXT_INFO "Exiting..."; exit 0 ;;
     esac
 }
 
-# $1 - aoc day number
-create_input_data() {
-    ENDPOINT="$API_URL/$YEAR/day/$1/input"
-    SESSION_COOKIE="$(get_session_cookie)"
-    INPUT_PATH=$(get_input_path $1)
-    SAMPLE_INPUT_FILE=$(get_sample_input_path $1)
-
-    echo "$(curl -s -H "Accept: application/json" --cookie "session=$(get_session_cookie)" $ENDPOINT)" >$INPUT_PATH
-    touch $SAMPLE_INPUT_FILE
-}
-
-# $1 - aoc day number
 create_day() {
-    DAY_NAME="$(get_day_name $1)"
-    FILE_PATH="$(get_file_path $1)"
-    DAY_PATH="$(get_day_path $1)"
+    local day_name=$(get_day_name "$1")
+    local file_path=$(get_file_path "$1")
+    local day_path=$(get_day_path "$1")
 
-    if [ -f $FILE_PATH ]; then
-        print $TEXT_ERROR "Day $DAY_NAME exists at $FILE_PATH. Override?"
-        ask_to_override $1
+    if [ -f "$file_path" ]; then
+        print $TEXT_ERROR "Day $day_name exists at $file_path. Override?"
+        ask_to_override "$1"
     else
-        print $TEXT_INFO "Creating a new day $DAY_NAME at $FILE_PATH"
-        mkdir $DAY_PATH
+        print $TEXT_INFO "Creating a new day $day_name at $file_path"
+        mkdir -p "$day_path"
     fi
 
-    cp "./$TEMPLATE_FILE" $FILE_PATH
-    create_input_data $1
+    cp "./$AOC_TEMPLATE_FILE" "$file_path"
+    create_input_data "$1"
 }
 
-#  $1 - aoc day number
-run_day_in_dedicated_env() {
-    FILE_NAME="$(get_file_name $1)"
-    FILE="$(get_file $1)"
-    DAY_PATH="$(get_day_path $1)"
-    ROOT_PATH="$(pwd)"
+create_input_data() {
+    local day_endpoint="$AOC_API_URL/$AOC_YEAR/day/$1"
+    local day_input_endpoint="$day_endpoint/input"
+    local session_cookie="$AOC_SESSION_COOKIE"
+    local input_path=$(get_input_path "$1")
+    local sample_input_path=$(get_sample_input_path "$1")
 
-    print $TEXT_INFO_SECONDARY 'Running with node...' && cd $DAY_PATH && node $FILE && cd $ROOT_PATH
+    curl -s -H "Accept: application/json" --cookie "session=$session_cookie" $day_input_endpoint > $input_path
+    touch $sample_input_path
 }
 
-# $1 - aoc day number
+extract_code() {
+    local input="$1"
+    if [[ "$input" =~ "<code>(.*?)</code>" ]]; then
+        echo "${BASH_REMATCH[1]}"  # Return the first match (content inside <code></code>)
+    else
+        echo "No match found"
+    fi
+}
+
 run_day() {
-    FILE_PATH="$(get_file_path $1)"
-    print $TEXT_INFO "Running day $(get_day_name $1) at $FILE_PATH"
-    run_day_in_dedicated_env $1
+    local file_path=$(get_file_path "$1")
+    print $TEXT_INFO "Running day $(get_day_name "$1") at $file_path"
+    (cd "$(dirname "$file_path")" && node "$(basename "$file_path")")
 }
 
 list_days() {
     print $TEXT_INFO "Listing all created days:"
-    for f in "$DAYS_PATH/*"; do
-        print $TEXT_INFO_SECONDARY $f
+    for day in "$AOC_DAYS_PATH"/*; do
+        [ -d "$day" ] && print $TEXT_INFO_SECONDARY "$(basename "$day")"
     done
 }
 
-# $1 - aoc day number
-code_day() {
-    DAY_NAME="$(get_day_name $1)"
-    DAY_PATH="$(get_day_path $1)"
-    print $TEXT_INFO "Opening day $DAY_NAME in $EDITOR"
-    echo "$($EDITOR $DAY_PATH)"
+open_day_in_editor() {
+    local day_path=$(get_day_path "$1")
+    print $TEXT_INFO "Opening $(get_day_name "$1") in $AOC_EDITOR"
+    "$AOC_EDITOR" "$day_path"
 }
 
-# $1 - aoc day number
 stage_day() {
-    DAY_NAME="$(get_day_name $1)"
-    DAY_PATH="$(get_day_path $1)"
-    print $TEXT_INFO "Commiting AoC day $DAY_NAME at $DAY_PATH"
-    git add "$DAY_PATH" && git commit -m "Add day $1 of year $YEAR $(get_xmas_emoji)"
+    local day_path=$(get_day_path "$1")
+    print $TEXT_INFO "Committing $(get_day_name "$1")"
+    git add "$day_path" && git commit -m "Add day $1 of year $AOC_YEAR $(get_xmas_emoji)"
 }
 
-# --- begin options parsing ---
-VALID_ARGS=$(getopt -a -n $0 -o hla:c:s:r: --long help,list,add:,code:,stage:,run: -- "$@")
-if [[ $? -ne 0 ]]; then
-    help
+init_env() {
+    if [ ! -f ".env" ]; then
+        print "$TEXT_INFO" ".env file does not exist. Creating from .env.sample"
+        cp ".env.sample" ".env" || {
+            print "$TEXT_ERROR" "Failed to create .env file from .env.sample"
+            return 1
+        }
+    fi
+
+    set -a
+    source "./.env" || {
+        print "$TEXT_ERROR" "Failed to load .env file."
+        return 1
+    }
+    set +a
+
+    REQUIRED_VARS=("AOC_SESSION_COOKIE" "AOC_API_URL" "AOC_EDITOR" "AOC_YEAR")
+    for var in "${REQUIRED_VARS[@]}"; do
+        if [ -z "${!var}" ]; then
+            print "$TEXT_ERROR" "Environment variable $var is not set in .env"
+            return 1
+        fi
+    done
+
+    return 0
+}
+
+# --- Initialize Environment Variables ---
+
+if ! init_env; then
+    print "$TEXT_ERROR" "Environment setup failed. Exiting..."
     exit 1
 fi
 
+
+# --- Option Parsing ---
+VALID_ARGS=$(getopt -a -n $0 -o hla:c:s:r: --long help,list,add:,code:,stage:,run: -- "$@")
+if [ $? -ne 0 ]; then help; exit 1; fi
+
 eval set -- "$VALID_ARGS"
-while [ : ]; do
+while :; do
     case "$1" in
-    -h | --help)
-        help
-        exit
-        ;;
-    -l | --list)
-        list_days
-        exit
-        ;;
-    -a | --add)
-        create_day $2
-        shift 2
-        ;;
-    -c | --code)
-        code_day $2
-        shift 2
-        ;;
-    -s | --stage)
-        stage_day $2
-        shift 2
-        ;;
-    -r | --run)
-        run_day $2
-        shift 2
-        ;;
-    --)
-        shift
-        break
-        ;;
+    -h | --help) help; exit ;;
+    -l | --list) list_days; exit ;;
+    -a | --add) create_day "$2"; shift 2 ;;
+    -c | --code) open_day_in_editor "$2"; shift 2 ;;
+    -s | --stage) stage_day "$2"; shift 2 ;;
+    -r | --run) run_day "$2"; shift 2 ;;
+    --) shift; break ;;
+    *) help; exit 1 ;;
     esac
 done
-# --- end options parsing ---
