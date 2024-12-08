@@ -1,8 +1,16 @@
+/**
+ * [Boilerplate]
+ * Runs part1 and part2 based on provided input and samples.
+ * Logs data to console, and generates README.md file with benchmark summary.
+ *
+ * @see [Solution file]{@link ./main.sol.js} for the solvers implementation.
+ */
 const fs = require("fs");
 const os = require("os");
-const { Console } = require("console");
-const { Transform } = require("stream");
+
 const { parse, part1, part2 } = require("./main.sol");
+
+const README_FILE_PATH = "./README.md";
 
 function noop() {}
 
@@ -14,35 +22,103 @@ const color = {
 };
 
 const component = {
-  heading: (str, colorCode = color.primary) =>
-    `${colorCode}=== ${str.toUpperCase()} ===${color.reset}`,
-  subheading: (str, colorCode = color.secondary) =>
-    `${colorCode}--- ${str.toUpperCase()} ---${color.reset}`,
-  table(input) {
-    const ts = new Transform({
-      transform(chunk, enc, cb) {
-        cb(null, chunk);
-      },
-    });
-    const logger = new Console({ stdout: ts });
-    logger.table(input);
-    const table = (ts.read() || "").toString();
-    let result = "";
-    for (let row of table.split(/[\r\n]+/)) {
-      let r = row.replace(/[^┬]*┬/, "┌");
-      r = r.replace(/^├─*┼/, "├");
-      r = r.replace(/│[^│]*/, "");
-      r = r.replace(/^└─*┴/, "└");
-      r = r.replace(/'/g, " ");
-      result += `${r}\n`;
-    }
-    return result;
+  heading(str, colorCode = color.primary) {
+    return `${colorCode}=== ${str.toUpperCase()} ===${color.reset}`;
+  },
+  subheading(str, colorCode = color.secondary) {
+    return `${colorCode}--- ${str.toUpperCase()} ---${color.reset}`;
+  },
+  capitalized(val) {
+    return val.charAt(0).toUpperCase() + String(val).slice(1);
   },
 };
 
-function capitalize(val) {
-  return val.charAt(0).toUpperCase() + String(val).slice(1);
-}
+const markdown = {
+  header(level, children) {
+    return `${new Array(level).fill("#").join("")} ${children}`;
+  },
+  table(headings, rows) {
+    const colWidth = headings.map((heading, index) =>
+      Math.max(
+        heading.length,
+        ...rows.map((row) => row[index].toString().length)
+      )
+    );
+
+    return [
+      [
+        "|",
+        headings
+          .map(
+            (heading, index) => `${heading.toString().padEnd(colWidth[index])}`
+          )
+          .join(" | "),
+        "|",
+      ].join(" "),
+      [
+        "|",
+        colWidth
+          .map((width) => new Array(width).fill("-").join(""))
+          .join(" | "),
+        "|",
+      ].join(" "),
+      ...rows.map((row) =>
+        [
+          "|",
+          row
+            .map((cell, index) => `${cell.toString().padEnd(colWidth[index])}`)
+            .join(" | "),
+          "|",
+        ].join(" ")
+      ),
+    ].join("\n");
+  },
+};
+
+const readme = {
+  init() {
+    fs.writeFile(
+      README_FILE_PATH,
+      [
+        markdown.header(1, "Benchmark"),
+        "",
+        "```",
+        getSystemInfo().trim(),
+        "```",
+        "",
+      ].join("\n"),
+      noop
+    );
+  },
+  appendSection(heading, ans1Delta, ans2Delta) {
+    const markdownSection = [
+      "",
+      markdown.header(2, component.capitalized(heading)),
+      "",
+      markdown.table(
+        ["part", "time (~)", "μs"],
+        [
+          [1, ans1Delta],
+          [2, ans2Delta],
+        ].map(([part, delta]) => [part, formatDelta(delta), delta])
+      ),
+      "",
+    ].join("\n");
+
+    fs.appendFile(README_FILE_PATH, markdownSection, noop);
+  },
+};
+
+const print = {
+  section(heading, data, ans1, ans2, ans1Delta, ans2Delta) {
+    console.log(component.heading(heading, color.accent));
+    console.dir(data, { maxArrayLength: 5, depth: null });
+    console.log(component.subheading("part 1"), formatDelta(ans1Delta));
+    console.log(ans1);
+    console.log(component.subheading("part 2"), formatDelta(ans2Delta));
+    console.log(ans2);
+  },
+};
 
 function withMeasure(fn) {
   const t0 = performance.now();
@@ -61,59 +137,29 @@ function formatDelta(delta) {
   return `${(delta / 1000).toFixed(3)}s`;
 }
 
-const print = {
-  section: (heading, data, solver1, solver2) => {
-    const part1 = withMeasure(() => solver1(data));
-    const part2 = withMeasure(() => solver2(data));
-    const summary = component.table(
-      [
-        [1, part1.delta],
-        [2, part2.delta],
-      ].map(([part, delta]) => ({
-        part,
-        "time (~)": formatDelta(delta),
-        μs: delta,
-      }))
-    );
-
-    console.log(component.heading(heading, color.accent));
-    console.dir(data, { maxArrayLength: 5, depth: null });
-    console.log(component.subheading("part 1"));
-    console.log(part1.result);
-    console.log(component.subheading("part 2"));
-    console.log(part2.result);
-
-    fs.appendFile(
-      "./README.md",
-      [
-        "",
-        `## ${capitalize(heading)}`,
-        "",
-        "```",
-        summary.trim(),
-        "```",
-        "",
-      ].join("\n"),
-      noop
-    );
-  },
-};
-
 function getSystemInfo() {
-  let info = "";
-
-  info += `Platform: ${os.platform()} ${os.arch()}\n`;
-
   const cpus = os.cpus();
-  const cpu = os.cpus()[0];
-  info += `CPU: ${cpus[0].model} @ ${(cpu.speed / 1000).toFixed(2)} GHz, ${
-    cpus.length
-  } Cores\n`;
 
-  const totalMem = os.totalmem();
-  info += `Memory: ${(totalMem / 1024 ** 3).toFixed(2)} GB\n`;
+  return [
+    `Platform: ${os.platform()} ${os.arch()}`,
+    `CPU: ${cpus[0].model} ${cpus.length} Cores`,
+    `Memory: ${(os.totalmem() / 1024 ** 3).toFixed(2)} GB`,
+  ].join("\n");
+}
 
-  return info;
+function run(heading, data) {
+  const ans1 = withMeasure(() => part1(data));
+  const ans2 = withMeasure(() => part2(data));
+
+  print.section(
+    heading,
+    data,
+    ans1.result,
+    ans2.result,
+    ans1.delta,
+    ans2.delta
+  );
+  readme.appendSection(heading, ans1.delta, ans2.delta);
 }
 
 function withInput(callback) {
@@ -127,14 +173,8 @@ function withInput(callback) {
 }
 
 withInput((data, samples) => {
-  fs.writeFile(
-    "./README.md",
-    ["# Summary", "", "```", getSystemInfo().trim(), "```", ""].join("\n"),
-    noop
-  );
+  readme.init();
 
-  samples.forEach((sample, index) =>
-    print.section(`sample ${index + 1}`, sample, part1, part2)
-  );
-  print.section(`answer`, data, part1, part2);
+  samples.forEach((sample, index) => run(`sample ${index + 1}`, sample));
+  run("answer", data);
 });
