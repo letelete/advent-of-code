@@ -13,32 +13,26 @@ const ops = {
   concat: (a, b) => Number(`${a}${b}`),
 };
 
-const createSolver = (ops) => {
-  const memo = new Map();
-
+const createSolver = (ops, memo = new Map()) => {
   const check = (value, nums, test) => {
     if (!nums.length || value > test) {
       return value === test;
     }
 
     const hash = `${[value, ...nums].join(",")}=${test}`;
-
     if (!memo.has(hash)) {
       memo.set(
         hash,
         ops.some((op) => check(op(value, nums[0]), nums.slice(1), test))
       );
     }
-
     return memo.get(hash);
   };
 
   return { check };
 };
 
-function calculateSum(data, ops) {
-  const solver = createSolver(ops);
-
+function calculateSum(data, solver) {
   return data.reduce((sum, { test, nums }) => {
     if (solver.check(nums[0], nums.slice(1), test)) {
       return sum + test;
@@ -47,12 +41,19 @@ function calculateSum(data, ops) {
   }, 0);
 }
 
+const part1Memo = new Map();
+
 function part1(data) {
-  return calculateSum(data, [ops.add, ops.multiply]);
+  const solver = createSolver([ops.add, ops.multiply], part1Memo);
+  return calculateSum(data, solver);
 }
 
 function part2(data) {
-  return calculateSum(data, Object.values(ops));
+  const part2Memo = new Map(
+    [...part1Memo.entries()].filter(([, solved]) => solved)
+  );
+  const solver = createSolver(Object.values(ops), part2Memo);
+  return calculateSum(data, solver);
 }
 
 module.exports = { parse, part1, part2 };
