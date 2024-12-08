@@ -3,7 +3,7 @@
 # --- Constants ---
 AOC_INPUT_FILE="in.txt"
 AOC_SAMPLE_INPUT_FILE="in.sample.txt"
-AOC_TEMPLATE_FILE="template.js"
+AOC_TEMPLATE_DIR="./template"
 AOC_DAYS_PATH="./days"
 
 # --- Theme ---
@@ -77,7 +77,7 @@ create_day() {
         mkdir -p "$day_path"
     fi
 
-    cp "./$AOC_TEMPLATE_FILE" "$file_path"
+    cp -r "$AOC_TEMPLATE_DIR/" "$day_path"
     create_input_data "$1"
 }
 
