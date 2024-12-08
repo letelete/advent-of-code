@@ -34,8 +34,8 @@ function inRange(data, row, col) {
 function part1(data) {
   const antinodes = new Set();
 
-  getAntennaPositions(data).forEach((allPos) =>
-    generatePairs(allPos).forEach(([a, b]) => {
+  getAntennaPositions(data).forEach((positions) =>
+    generatePairs(positions).forEach(([a, b]) => {
       const dx = a[0] - b[0];
       const dy = a[1] - b[1];
       [
@@ -55,8 +55,8 @@ function part1(data) {
 function part2(data) {
   const antinodes = new Set();
 
-  getAntennaPositions(data).forEach((allPos) =>
-    generatePairs(allPos).forEach((pair) => {
+  getAntennaPositions(data).forEach((positions) =>
+    generatePairs(positions).forEach((pair) => {
       let a = [...pair[0]];
       let b = [...pair[1]];
       const dx = a[0] - b[0];
