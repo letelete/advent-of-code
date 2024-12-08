@@ -41,7 +41,7 @@ output+="> Made by [Bruno Kawka](https://kawka.me)."$'\n'
 output+=""$'\n'
 output+="> Last update at $(date)"$'\n'
 
-echo "Reading file: $day_path/$readme_file"
+print "Reading file: $day_path/$readme_file"
 if [[ ! -f "$day_path/$readme_file" ]]; then
   echo "Error: $readme_file does not exist."
   exit 1
@@ -59,5 +59,5 @@ ${output}
 ${after_stats}"
 
 print "Printing new content to the $day_path/$readme_file file"
-print "$new_content"
+print "${color_fg_accent_light}$new_content${color_reset}"
 echo -e "$new_content" >"$day_path/$readme_file"
