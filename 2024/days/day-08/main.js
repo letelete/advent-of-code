@@ -53,7 +53,6 @@ function part1(data) {
 }
 
 function part2(data) {
-  return null;
   const antinodes = new Set();
 
   getAntennaPositions(data).forEach((positions) =>
