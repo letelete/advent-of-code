@@ -19,7 +19,7 @@ const createSolver = (ops) => {
   const memo = new Map();
 
   const check = (value, nums, test) => {
-    if (!nums.length) {
+    if (!nums.length || value > test) {
       return value === test;
     }
 
