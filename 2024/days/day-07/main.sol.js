@@ -24,10 +24,10 @@ const createSolver = (ops) => {
     const hash = `${[value, ...nums].join(",")}=${test}`;
 
     if (!memo.has(hash)) {
-      const result = ops.some((op) =>
-        check(op(value, nums[0]), nums.slice(1), test)
+      memo.set(
+        hash,
+        ops.some((op) => check(op(value, nums[0]), nums.slice(1), test))
       );
-      memo.set(hash, result);
     }
 
     return memo.get(hash);
