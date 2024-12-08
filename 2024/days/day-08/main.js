@@ -12,8 +12,6 @@ const { parse, part1, part2 } = require("./main.sol");
 
 const README_FILE_PATH = "./README.md";
 
-function noop() {}
-
 const color = {
   primary: "\x1b[97m",
   secondary: "\x1b[90m",
@@ -77,7 +75,7 @@ const markdown = {
 
 const readme = {
   init() {
-    fs.writeFile(
+    fs.writeFileSync(
       README_FILE_PATH,
       [
         markdown.header(1, "Benchmark"),
@@ -86,8 +84,7 @@ const readme = {
         getSystemInfo().trim(),
         "```",
         "",
-      ].join("\n"),
-      noop
+      ].join("\n")
     );
   },
   appendSection(heading, ans1Delta, ans2Delta) {
@@ -105,7 +102,7 @@ const readme = {
       "",
     ].join("\n");
 
-    fs.appendFile(README_FILE_PATH, markdownSection, noop);
+    fs.appendFileSync(README_FILE_PATH, markdownSection);
   },
 };
 
