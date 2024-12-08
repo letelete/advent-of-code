@@ -1,25 +1,17 @@
 #!/usr/bin/env bash
 
-# --- Constants ---
-AOC_INPUT_FILE="in.txt"
-AOC_SAMPLE_INPUT_FILE="in.sample.txt"
-AOC_TEMPLATE_DIR="./template"
-AOC_DAYS_PATH="./days"
-
-# --- Theme ---
 TEXT_AOC="$(tput rev)$(tput setaf 206)"
 TEXT_INFO="$(tput bold)$(tput setaf 15)"
 TEXT_INFO_SECONDARY="$(tput setaf 255)"
 TEXT_ERROR="$(tput rev)$(tput setaf 196)"
 TEXT_DEFAULT="$(tput sgr0)"
 
-# --- Functions ---
 print() {
     echo "${TEXT_AOC}[aoc]${TEXT_DEFAULT} $1$2${TEXT_DEFAULT}"
 }
 
 get_xmas_emoji() {
-    local emojis=("🎅" "🤶" "🧑‍🎄" "👼" "🧝" "🧝‍♂️" "🧝‍♀️" "🦌" "🎄" "🌟" "❄️" "⛄" "🎁" "🔔" "🎶" "🕯️" "🍪" "🥛" "🎂" "🦃" "🧦" "🎉")
+    local emojis=("🎅" "🤶" "🧑‍🎄" "👼" "🧝" "🧝‍♂️" "🧝‍♀️" "🦌" "🎄" "🌟" "❄️" "⛄" "🎁" "🔔" "🎶" "🕯️" "🍪" "🥛" "🎂" "🧦" "🎉")
     echo "${emojis[RANDOM % ${#emojis[@]}]}"
 }
 
@@ -34,7 +26,7 @@ ask_yes_no() {
 
 get_day_name() { printf "day-%02d" "$1"; }
 get_day_path() { echo "$AOC_DAYS_PATH/$(get_day_name "$1")"; }
-get_file_path() { echo "$(get_day_path "$1")/main.js"; }
+get_file_path() { echo "$(get_day_path "$1")/$AOC_DAY_TARGET_FILE"; }
 get_input_path() { echo "$(get_day_path "$1")/$AOC_INPUT_FILE"; }
 get_sample_input_path() { echo "$(get_day_path "$1")/$AOC_SAMPLE_INPUT_FILE"; }
 
@@ -88,23 +80,14 @@ create_input_data() {
     local input_path=$(get_input_path "$1")
     local sample_input_path=$(get_sample_input_path "$1")
 
-    curl -s -H "Accept: application/json" --cookie "session=$session_cookie" $day_input_endpoint > $input_path
+    curl -s -H "Accept: application/json" --cookie "session=$session_cookie" $day_input_endpoint >$input_path
     touch $sample_input_path
 }
 
-extract_code() {
-    local input="$1"
-    if [[ "$input" =~ "<code>(.*?)</code>" ]]; then
-        echo "${BASH_REMATCH[1]}"  # Return the first match (content inside <code></code>)
-    else
-        echo "No match found"
-    fi
-}
-
 run_day() {
-    local file_path=$(get_file_path "$1")
-    print $TEXT_INFO "Running day $(get_day_name "$1") at $file_path"
-    (cd "$(dirname "$file_path")" && node "$(basename "$file_path")")
+    local day_path=$(get_day_path "$1")
+    print $TEXT_INFO "Running day $(get_day_name "$1") at $day_path"
+    node "$AOC_RUNNER_PATH" "$day_path" "$AOC_DAY_TARGET_FILE"
 }
 
 list_days() {
@@ -142,7 +125,7 @@ init_env() {
     }
     set +a
 
-    REQUIRED_VARS=("AOC_SESSION_COOKIE" "AOC_API_URL" "AOC_EDITOR" "AOC_YEAR")
+    REQUIRED_VARS=("AOC_SESSION_COOKIE" "AOC_API_URL" "AOC_EDITOR" "AOC_YEAR" "AOC_INPUT_FILE" "AOC_SAMPLE_INPUT_FILE" "AOC_TEMPLATE_DIR" "AOC_DAYS_PATH" "AOC_RUNNER_PATH" "AOC_DAY_TARGET_FILE")
     for var in "${REQUIRED_VARS[@]}"; do
         if [ -z "${!var}" ]; then
             print "$TEXT_ERROR" "Environment variable $var is not set in .env"
@@ -153,15 +136,11 @@ init_env() {
     return 0
 }
 
-# --- Initialize Environment Variables ---
-
 if ! init_env; then
     print "$TEXT_ERROR" "Environment setup failed. Exiting..."
     exit 1
 fi
 
-
-# --- Option Parsing ---
 VALID_ARGS=$(getopt -a -n $0 -o hla:c:s:r: --long help,list,add:,code:,stage:,run: -- "$@")
 if [ $? -ne 0 ]; then help; exit 1; fi
 

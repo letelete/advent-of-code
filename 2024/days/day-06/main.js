@@ -1,184 +1,151 @@
-/**
- * [Boilerplate]
- * Runs part1 and part2 based on provided input and samples.
- * Logs data to console, and generates README.md file with benchmark summary.
- *
- * @see [Solution file]{@link ./main.sol.js} for the solvers implementation.
- */
-const fs = require("fs");
-const os = require("os");
-
-const { parse, part1, part2 } = require("./main.sol");
-
-const README_FILE_PATH = "./README.md";
-
-const color = {
-  primary: "\x1b[97m",
-  secondary: "\x1b[90m",
-  accent: "\x1b[35m",
-  reset: "\x1b[0m",
-};
-
-const component = {
-  heading(str, colorCode = color.primary) {
-    return `${colorCode}=== ${str.toUpperCase()} ===${color.reset}`;
-  },
-  subheading(str, colorCode = color.secondary) {
-    return `${colorCode}--- ${str.toUpperCase()} ---${color.reset}`;
-  },
-  capitalized(val) {
-    return val.charAt(0).toUpperCase() + String(val).slice(1);
-  },
-};
-
-const markdown = {
-  header(level, children) {
-    return `${new Array(level).fill("#").join("")} ${children}`;
-  },
-  table(headings, rows) {
-    const colWidth = headings.map((heading, index) =>
-      Math.max(
-        heading.length,
-        ...rows.map((row) => row[index].toString().length)
-      )
-    );
-
-    return [
-      [
-        "|",
-        headings
-          .map(
-            (heading, index) => `${heading.toString().padEnd(colWidth[index])}`
-          )
-          .join(" | "),
-        "|",
-      ].join(" "),
-      [
-        "|",
-        colWidth
-          .map((width) => new Array(width).fill("-").join(""))
-          .join(" | "),
-        "|",
-      ].join(" "),
-      ...rows.map((row) =>
-        [
-          "|",
-          row
-            .map((cell, index) => `${cell.toString().padEnd(colWidth[index])}`)
-            .join(" | "),
-          "|",
-        ].join(" ")
-      ),
-    ].join("\n");
-  },
-};
-
-const readme = {
-  init() {
-    fs.writeFileSync(
-      README_FILE_PATH,
-      [
-        markdown.header(1, "Benchmark"),
-        "",
-        "```",
-        getSystemInfo().trim(),
-        "```",
-        "",
-      ].join("\n")
-    );
-  },
-  appendSection(heading, ans1Delta, ans2Delta) {
-    const markdownSection = [
-      "",
-      markdown.header(2, component.capitalized(heading)),
-      "",
-      markdown.table(
-        ["part", "time (~)", "μs"],
-        [
-          [1, ans1Delta],
-          [2, ans2Delta],
-        ].map(([part, delta]) => [part, formatDelta(delta), delta])
-      ),
-      "",
-    ].join("\n");
-
-    fs.appendFileSync(README_FILE_PATH, markdownSection);
-  },
-};
-
-const print = {
-  section(heading, data, ans1, ans2, ans1Delta, ans2Delta) {
-    console.log(component.heading(heading, color.accent));
-    console.dir(data, { maxArrayLength: 5, depth: null });
-    console.log(component.subheading("part 1"), formatDelta(ans1Delta));
-    console.log(ans1);
-    console.log(component.subheading("part 2"), formatDelta(ans2Delta));
-    console.log(ans2);
-  },
-};
-
-function withMeasure(fn) {
-  const t0 = performance.now();
-  const result = fn();
-  const t1 = performance.now();
-
-  const delta = t1 - t0;
-
-  return { result, delta };
+function parse(source) {
+  return source.trim().split("\n");
 }
 
-function formatDelta(delta) {
-  if (delta < 1000) {
-    return `${delta.toFixed(2)}ms`;
-  }
-  return `${(delta / 1000).toFixed(3)}s`;
+const symbols = { obstacle: "#", guard: "^", empty: "." };
+const dirs = [
+  [0, -1],
+  [-1, 0],
+  [0, 1],
+  [1, 0],
+];
+
+function getGuardPos(data) {
+  const row = data.findIndex((row) => row.includes(symbols.guard));
+  const col = data[row].split("").findIndex((col) => col === symbols.guard);
+
+  return [row, col];
 }
 
-function getSystemInfo() {
-  const cpus = os.cpus();
-
-  return [
-    `Platform: ${os.platform()} ${os.arch()}`,
-    `CPU: ${cpus[0].model} ${cpus.length} Cores`,
-    `Memory: ${(os.totalmem() / 1024 ** 3).toFixed(2)} GB`,
-  ].join("\n");
+function isInRange(data, row, col) {
+  return row >= 0 && row < data.length && col >= 0 && col < data[0].length;
 }
 
-function run(heading, data) {
-  const ans1 = withMeasure(() => part1(data));
-  const ans2 = withMeasure(() => part2(data));
+function createWalker(
+  [initialRow, initialCol],
+  initialDir,
+  getValue,
+  checkInRange
+) {
+  const visitedWithDir = new Set();
+  let row = initialRow;
+  let col = initialCol;
+  let dir = initialDir;
 
-  print.section(
-    heading,
-    data,
-    ans1.result,
-    ans2.result,
-    ans1.delta,
-    ans2.delta
-  );
-  readme.appendSection(heading, ans1.delta, ans2.delta);
-}
+  const encodeHash = (row, col, dir) => `${row},${col},${dir}`;
+  const decodeHash = (hash) => hash.split(",").map(Number);
+  const nextRow = (row, dir) => row + dirs[dir][0];
+  const nextCol = (col, dir) => col + dirs[dir][1];
+  const nextDir = (dir) => (dir + 1) % dirs.length;
 
-function withInput(callback) {
-  const [data, ...samples] = fs
-    .readdirSync(".", { withFileTypes: true })
-    .filter((e) => e.isFile() && e.name.match(/^in(\.sample(.*)?)?\.txt$/))
-    .sort((a, b) => {
-      if (Boolean(a.name.match(/\.sample/))) {
-        return Boolean(b.name.match(/\.sample/))
-          ? a.name.localeCompare(b.name)
-          : 1;
+  const buildWalkerResponse = ({ escaped }) => ({
+    row,
+    col,
+    dir,
+    escaped,
+  });
+
+  function* stepGenerator() {
+    while (checkInRange(row, col)) {
+      const hash = encodeHash(row, col, dir);
+      if (visitedWithDir.has(hash)) {
+        return buildWalkerResponse({ escaped: false });
       }
-      return -1;
-    })
-    .map((file) => parse(fs.readFileSync(file.name, "utf-8")));
+      visitedWithDir.add(hash);
 
-  return callback(data, samples);
+      yield buildWalkerResponse({ escaped: false });
+
+      let rotations = dirs.length;
+      while (
+        --rotations &&
+        checkInRange(nextRow(row, dir), nextCol(col, dir)) &&
+        getValue(nextRow(row, dir), nextCol(col, dir)) === symbols.obstacle
+      ) {
+        dir = nextDir(dir);
+      }
+      if (rotations <= 0) {
+        return buildWalkerResponse({ escaped: false });
+      }
+
+      row = nextRow(row, dir);
+      col = nextCol(col, dir);
+    }
+
+    return buildWalkerResponse({ escaped: true });
+  }
+
+  return {
+    initialPos: [initialRow, initialCol],
+    initialDir,
+    gen: stepGenerator(),
+    step: null,
+    walk() {
+      this.step = this.gen.next();
+      while (!this.step.done) {
+        this.step = this.gen.next();
+      }
+      return this;
+    },
+    get visited() {
+      return new Set(
+        [...visitedWithDir].map((hash) => {
+          const [row, col] = decodeHash(hash);
+          return encodeHash(row, col);
+        })
+      );
+    },
+    encodeHash,
+    decodeHash,
+  };
 }
 
-withInput((data, samples) => {
-  readme.init();
+function part1(data) {
+  const walker = createWalker(
+    getGuardPos(data),
+    1,
+    (row, col) => data[row][col],
+    (row, col) => isInRange(data, row, col)
+  ).walk();
 
-  samples.forEach((sample, index) => run(`sample ${index + 1}`, sample));
-  run("answer", data);
-});
+  if (!walker.step.value.escaped) {
+    throw new Error("Guard cannot escape the lab");
+  }
+
+  return walker.visited.size;
+}
+
+function part2(data) {
+  const walker = createWalker(
+    getGuardPos(data),
+    1,
+    (row, col) => data[row][col],
+    (row, col) => isInRange(data, row, col)
+  ).walk();
+
+  if (!walker.step.value.escaped) {
+    throw new Error("Guard cannot escape the lab");
+  }
+
+  let cycles = 0;
+  walker.visited.forEach((posHash) => {
+    const [obstacleRow, obstacleCol] = walker.decodeHash(posHash);
+    const walkerWithObstacle = createWalker(
+      walker.initialPos,
+      1,
+      (row, col) =>
+        data[row][col] === symbols.empty &&
+        row === obstacleRow &&
+        col === obstacleCol
+          ? symbols.obstacle
+          : data[row][col],
+      (row, col) => isInRange(data, row, col)
+    );
+
+    if (!walkerWithObstacle.walk().step.value.escaped) {
+      cycles++;
+    }
+  });
+  return cycles;
+}
+
+module.exports = { parse, part1, part2 };

@@ -1,0 +1,37 @@
+name: Update README.md for the current year's module
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-year-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set executable permissions
+        run: chmod +x .github/scripts/*.sh
+
+      - name: Update README with current year
+        run: ./update-year-readme.sh $(date +'%Y')
+        working-directory: .github/scripts
+        shell: bash
+
+      - name: Commit README.md
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          git commit -m "Update README.md file with recent statistics"
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          force_with_lease: true
+          branch: ${{ github.head_ref }}

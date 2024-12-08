@@ -6,4 +6,4 @@ A repository for my AoC solutions :christmas_tree:
 
 Advent of Code is an Advent calendar of small programming puzzles for a variety of skill sets and skill level
 
-![aoc](aoc.jpg)
+![aoc](./assets/aoc.jpg)
