@@ -1,5 +1,3 @@
-const fs = require("fs");
-
 function parse(source) {
   return [...source.trim().matchAll(/^(\d+):\s((?:\d+\s?)+)$/gm)].map(
     ([_, test, nums]) => ({
