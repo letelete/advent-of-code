@@ -43,7 +43,7 @@ output+="> Last update at $(date)"$'\n'
 
 print "Reading file: $day_path/$readme_file"
 if [[ ! -f "$day_path/$readme_file" ]]; then
-  echo "Error: $readme_file does not exist."
+  print "Error: $readme_file does not exist."
   exit 1
 fi
 
