@@ -59,5 +59,5 @@ ${output}
 ${after_stats}"
 
 print "Printing new content to the $day_path/$readme_file file"
-print -e "$new_content"
+print "$new_content"
 echo -e "$new_content" >"$day_path/$readme_file"
