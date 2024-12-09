@@ -1,48 +1,30 @@
 function parse(source) {
-  return source.trim();
+  return source.trim().split('').map(Number);
 }
 
-Array.prototype.sum = function () {
-  return this.reduce((sum, value) => sum + value, 0);
-};
-
-Array.prototype.product = function () {
-  return this.reduce((x, value) => x * value, 1);
-};
-
-Array.prototype.equals = function (arr) {
-  return (
-    this.length === arr.length && this.every((e, i) => Object.is(e, arr[i]))
-  );
-};
-
 function part1(data) {
-  // 11332321109
-  // 0.111...22...33.4555555555
-  // 051115552255533545
-  // 051115552255533455
-
-  const arr = data.split('').map(Number);
-
   const id = (index) => Math.floor(index / 2);
   const isFile = (index) => index % 2 === 0;
-
   const q = [];
+  let arr = [...data];
+  let r = arr.length - 1;
 
-  for (let l = 0, lvirtual = 0, r = arr.length - 1; l <= r; l++) {
+  let offset = 0;
+
+  for (let l = 0; l <= r; l++) {
     if (isFile(l)) {
-      if (arr[l] > 0) {
-        q.push({ len: arr[l], id: id(l) });
-        lvirtual += arr[l];
+      if (arr[l]) {
+        q.push({ len: arr[l], id: id(l), offset });
+        offset += arr[l];
       }
     } else {
       let free = arr[l];
-      while (free > 0 && r >= lvirtual) {
+      while (free > 0 && r > l) {
         if (isFile(r)) {
           const take = Math.min(free, arr[r]);
-          q.push({ len: take, id: id(r) });
+          q.push({ len: take, id: id(r), offset });
 
-          lvirtual += take;
+          offset += take;
           free -= take;
           arr[r] -= take;
 
@@ -56,13 +38,67 @@ function part1(data) {
     }
   }
 
-  console.log({ q });
-
-  return checksum;
+  return q.reduce((checksum, block) => {
+    for (let i = 0; i < block.len; ++i) {
+      checksum += block.id * (block.offset + i);
+    }
+    return checksum;
+  }, 0);
 }
 
 function part2(data) {
-  return null;
+  const id = (index) => Math.floor(index / 2);
+  const isFile = (index) => index % 2 === 0;
+  const queue = [];
+  for (
+    let arr = [...data], l = 0, r = arr.length - 1, offset = 0;
+    l <= r;
+    l++
+  ) {
+    if (arr[l] === 0) {
+      offset += data[l];
+      continue;
+    }
+
+    if (isFile(l)) {
+      if (arr[l]) {
+        queue.push({ len: arr[l], id: id(l), offset });
+        offset += arr[l];
+      }
+    } else {
+      let free = arr[l];
+      let virtualr = r;
+      while (free > 0 && virtualr > l) {
+        if (isFile(virtualr)) {
+          if (arr[virtualr] === 0 && r === virtualr) {
+            r--;
+            virtualr--;
+            continue;
+          }
+          if (arr[virtualr] > free || arr[virtualr] === 0) {
+            virtualr--;
+            continue;
+          }
+
+          queue.push({ len: arr[virtualr], id: id(virtualr), offset });
+
+          offset += arr[virtualr];
+          free -= arr[virtualr];
+          arr[virtualr] = 0;
+        } else {
+          virtualr--;
+        }
+      }
+      offset += free;
+    }
+  }
+
+  return queue.reduce((checksum, block) => {
+    for (let i = 0; i < block.len; ++i) {
+      checksum += block.id * (block.offset + i);
+    }
+    return checksum;
+  }, 0);
 }
 
 module.exports = { parse, part1, part2 };
