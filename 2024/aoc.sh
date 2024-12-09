@@ -18,8 +18,14 @@ get_xmas_emoji() {
 ask_yes_no() {
     select answer in "$1" "$2"; do
         case $answer in
-        "$1") echo "yes"; break ;;
-        "$2") echo "no"; break ;;
+        "$1")
+            echo "yes"
+            break
+            ;;
+        "$2")
+            echo "no"
+            break
+            ;;
         esac
     done
 }
@@ -31,8 +37,9 @@ get_input_path() { echo "$(get_day_path "$1")/$AOC_INPUT_FILE"; }
 get_sample_input_path() { echo "$(get_day_path "$1")/$AOC_SAMPLE_INPUT_FILE"; }
 
 help() {
-    print $TEXT_INFO "Usage: [-r|--run <arg>] [-a|--add <arg>] [-c|--code <arg>] [-s|--stage <arg>] [-l|--list] [-h|--help]"
+    print $TEXT_INFO "Usage: [-t|--test <arg>] [-r|--run <arg>] [-a|--add <arg>] [-c|--code <arg>] [-s|--stage <arg>] [-l|--list] [-h|--help]"
     local options=(
+        "-t | --test  <DAY_NUMBER>           Executes given AoC day with samples only."
         "-r | --run   <DAY_NUMBER>           Executes given AoC day."
         "-a | --add   <DAY_NUMBER>           Adds a new AoC day."
         "-c | --code  <DAY_NUMBER>           Opens given AoC day in $AOC_EDITOR."
@@ -52,7 +59,10 @@ ask_to_override() {
     local no_msg="No, abort"
     case "$(ask_yes_no "$yes_msg" "$no_msg")" in
     "yes") print $TEXT_INFO "Overriding day $day_name..." ;;
-    "no") print $TEXT_INFO "Exiting..."; exit 0 ;;
+    "no")
+        print $TEXT_INFO "Exiting..."
+        exit 0
+        ;;
     esac
 }
 
@@ -88,6 +98,12 @@ run_day() {
     local day_path=$(get_day_path "$1")
     print $TEXT_INFO "Running day $(get_day_name "$1") at $day_path"
     node "$AOC_RUNNER_PATH" "$day_path" "$AOC_DAY_TARGET_FILE"
+}
+
+test_day() {
+    local day_path=$(get_day_path "$1")
+    print $TEXT_INFO "Running day $(get_day_name "$1") at $day_path (samples only)"
+    node "$AOC_RUNNER_PATH" "$day_path" "$AOC_DAY_TARGET_FILE" --test
 }
 
 list_days() {
@@ -141,19 +157,50 @@ if ! init_env; then
     exit 1
 fi
 
-VALID_ARGS=$(getopt -a -n $0 -o hla:c:s:r: --long help,list,add:,code:,stage:,run: -- "$@")
-if [ $? -ne 0 ]; then help; exit 1; fi
+VALID_ARGS=$(getopt -a -n $0 -o hla:c:s:r:t: --long help,list,add:,code:,stage:,run:,test: -- "$@")
+if [ $? -ne 0 ]; then
+    help
+    exit 1
+fi
 
 eval set -- "$VALID_ARGS"
 while :; do
     case "$1" in
-    -h | --help) help; exit ;;
-    -l | --list) list_days; exit ;;
-    -a | --add) create_day "$2"; shift 2 ;;
-    -c | --code) open_day_in_editor "$2"; shift 2 ;;
-    -s | --stage) stage_day "$2"; shift 2 ;;
-    -r | --run) run_day "$2"; shift 2 ;;
-    --) shift; break ;;
-    *) help; exit 1 ;;
+    -h | --help)
+        help
+        exit
+        ;;
+    -l | --list)
+        list_days
+        exit
+        ;;
+    -a | --add)
+        create_day "$2"
+        shift 2
+        ;;
+    -c | --code)
+        open_day_in_editor "$2"
+        shift 2
+        ;;
+    -s | --stage)
+        stage_day "$2"
+        shift 2
+        ;;
+    -r | --run)
+        run_day "$2"
+        shift 2
+        ;;
+    -t | --test)
+        test_day "$2"
+        shift 2
+        ;;
+    --)
+        shift
+        break
+        ;;
+    *)
+        help
+        exit 1
+        ;;
     esac
 done

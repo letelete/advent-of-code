@@ -14,6 +14,7 @@ const README_FILENAME = `README.md`;
 const args = process.argv.slice(2);
 const dayPath = args[0];
 const dayTarget = args[1];
+const samplesOnly = args.includes('--test');
 if (!dayPath) {
   throw new Error('Missing required argument: relative day path');
 }
@@ -122,7 +123,7 @@ const readme = {
 const print = {
   section(heading, data, ans1, ans2) {
     console.log(component.heading(heading, color.accent));
-    console.dir(data, { maxArrayLength: 5, depth: null });
+    console.dir(data, { maxArrayLength: 5, depth: 1 });
     console.log(component.subheading('part 1'), formatDelta(ans1.delta));
     console.log(ans1.result);
     console.log(component.subheading('part 2'), formatDelta(ans2.delta));
@@ -192,5 +193,7 @@ withInput((data, samples) => {
   readme.init();
 
   samples.forEach((sample, index) => run(`sample ${index + 1}`, sample));
-  run('answer', data);
+  if (!samplesOnly) {
+    run('answer', data);
+  }
 });
