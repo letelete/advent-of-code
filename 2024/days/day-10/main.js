@@ -56,13 +56,11 @@ function countReachable(data, startRow, startCol) {
 }
 
 function countUniquePaths(data, row, col, dp) {
-  if (dp[row][col] !== null) {
-    return dp[row][col];
-  }
-
   if (data[row][col] === TOP_HEIGHT) {
     dp[row][col] = 1;
-    return 1;
+  }
+  if (dp[row][col] !== null) {
+    return dp[row][col];
   }
 
   dp[row][col] = dirs.orthogonal
