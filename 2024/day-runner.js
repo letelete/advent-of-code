@@ -123,7 +123,7 @@ const readme = {
 const print = {
   section(heading, data, ans1, ans2) {
     console.log(component.heading(heading, color.accent));
-    console.dir(data, { maxArrayLength: 5, depth: 1 });
+    console.dir(data, { maxArrayLength: 5, depth: null });
     console.log(component.subheading('part 1'), formatDelta(ans1.delta));
     console.log(ans1.result);
     console.log(component.subheading('part 2'), formatDelta(ans2.delta));
