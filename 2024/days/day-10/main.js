@@ -91,10 +91,11 @@ function part1(data) {
 function part2(data) {
   const heads = getHeads(data);
   const dp = data.map((row) => row.map(() => null));
-  return heads.reduce(
+  const t = heads.reduce(
     (count, [row, col]) => count + countUniquePaths(data, row, col, dp),
     0
   );
+  return t;
 }
 
 module.exports = { parse, part1, part2 };
