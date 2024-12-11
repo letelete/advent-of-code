@@ -38,7 +38,7 @@ function blink(n, stone) {
 }
 
 function part1(data) {
-  return data.reduce((sum, stone) => sum + blink(105, stone), 0);
+  return data.reduce((sum, stone) => sum + blink(25, stone), 0);
 }
 
 function part2(data) {
