@@ -14,9 +14,6 @@ function parse(source) {
     });
 }
 
-const COST_A = 3;
-const COST_B = 1;
-
 // ax * ta + bx * tb = X
 // ay * ta + by * tb = Y
 // thus:
@@ -38,24 +35,22 @@ function minTokensToWin([ax, ay], [bx, by], [X, Y]) {
   return ax * ta + bx * tb === X && ay * ta + by * tb === Y ? { ta, tb } : null;
 }
 
-function minTokensToWinAll(data, delta = 0) {
-  return data
-    .map(({ prize, ...rest }) => ({
-      ...rest,
-      prize: prize.map((p) => p + delta),
-    }))
-    .map(({ a, b, prize }) => minTokensToWin(a, b, prize))
+function minTokensCostToWin(a, b, prize, prizeDelta = 0) {
+  return minTokensToWin(a, b, prize + prizeDelta)
     .filter(Boolean)
-    .map(({ ta, tb }) => ta * COST_A + tb * COST_B)
-    .reduce((sum, v) => sum + v, 0);
+    .map(({ ta, tb }) => ta * 3 + tb);
 }
 
 function part1(data) {
-  return minTokensToWinAll(data);
+  return data
+    .map(({ a, b, prize }) => minTokensCostToWin(a, b, prize))
+    .reduce((sum, v) => sum + v, 0);
 }
 
 function part2(data) {
-  return minTokensToWinAll(data, 10000000000000);
+  return data
+    .map(({ a, b, prize }) => minTokensCostToWin(a, b, prize, 10000000000000))
+    .reduce((sum, v) => sum + v, 0);
 }
 
 module.exports = { parse, part1, part2 };
