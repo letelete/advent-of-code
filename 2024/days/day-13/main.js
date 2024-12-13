@@ -3,13 +3,13 @@ function parse(source) {
     .trim()
     .split('\n\n')
     .map((segment) => {
-      const [, aX, aY, bX, bY, prizeX, prizeY] = segment.match(
+      const [, ax, ay, bx, by, X, Y] = segment.match(
         /Button A: X\+(\d+), Y\+(\d+)\nButton B: X\+(\d+), Y\+(\d+)\nPrize: X=(\d+), Y=(\d+)/
       );
       return {
-        a: [Number(aX), Number(aY)],
-        b: [Number(bX), Number(bY)],
-        prize: [Number(prizeX), Number(prizeY)],
+        a: [Number(ax), Number(ay)],
+        b: [Number(bx), Number(by)],
+        prize: [Number(X), Number(Y)],
       };
     });
 }
