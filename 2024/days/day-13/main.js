@@ -35,22 +35,23 @@ function minTokensToWin([ax, ay], [bx, by], [X, Y]) {
   return ax * ta + bx * tb === X && ay * ta + by * tb === Y ? { ta, tb } : null;
 }
 
-function minTokensCostToWin(a, b, prize, prizeDelta = 0) {
-  return minTokensToWin(a, b, prize + prizeDelta)
-    .filter(Boolean)
-    .map(({ ta, tb }) => ta * 3 + tb);
+function minCostToWin(a, b, prize, prizeDelta = 0) {
+  const tokens = minTokensToWin(a, b, prize.map((p) => p + prizeDelta));
+  return tokens ? tokens.ta * 3 + tokens.tb : 0;
 }
 
 function part1(data) {
-  return data
-    .map(({ a, b, prize }) => minTokensCostToWin(a, b, prize))
-    .reduce((sum, v) => sum + v, 0);
+  return data.reduce(
+    (sum, { a, b, prize }) => sum + minCostToWin(a, b, prize),
+    0
+  );
 }
 
 function part2(data) {
-  return data
-    .map(({ a, b, prize }) => minTokensCostToWin(a, b, prize, 10000000000000))
-    .reduce((sum, v) => sum + v, 0);
+  return data.reduce(
+    (sum, { a, b, prize }) => sum + minCostToWin(a, b, prize, 10000000000000),
+    0
+  );
 }
 
 module.exports = { parse, part1, part2 };
