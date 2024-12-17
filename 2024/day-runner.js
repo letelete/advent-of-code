@@ -5,6 +5,8 @@
  * @argument {dayPath}    A relative path to the day the runner executes.
  * @argument {dayTarget}  A filename that the runner imports { parse, part1, part2} from.
  *                        Defaults to `main.js`.
+ * @argument {noSamples}  A flag indicating if samples should be omitted.
+ * @argument {samples}    A flag indicating if only samples should be run.
  */
 const fs = require('fs');
 const os = require('os');
@@ -14,7 +16,8 @@ const README_FILENAME = `README.md`;
 const args = process.argv.slice(2);
 const dayPath = args[0];
 const dayTarget = args[1];
-const samplesOnly = args.includes('--test');
+const noSamples = args.includes('--nosamples');
+const samplesOnly = !noSamples && args.includes('--samples');
 if (!dayPath) {
   throw new Error('Missing required argument: relative day path');
 }
@@ -192,7 +195,9 @@ function withInput(callback) {
 withInput((data, samples) => {
   readme.init();
 
-  samples.forEach((sample, index) => run(`sample ${index + 1}`, sample));
+  if (!noSamples) {
+    samples.forEach((sample, index) => run(`sample ${index + 1}`, sample));
+  }
   if (!samplesOnly) {
     run('answer', data);
   }

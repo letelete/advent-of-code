@@ -37,13 +37,14 @@ get_input_path() { echo "$(get_day_path "$1")/$AOC_INPUT_FILE"; }
 get_sample_input_path() { echo "$(get_day_path "$1")/$AOC_SAMPLE_INPUT_FILE"; }
 
 help() {
-    print $TEXT_INFO "Usage: [-t|--test <arg>] [-r|--run <arg>] [-a|--add <arg>] [-c|--code <arg>] [-s|--stage <arg>] [-l|--list] [-h|--help]"
+    print $TEXT_INFO "Usage: [-d|--data <arg>] [-t|--test <arg>] [-r|--run <arg>] [-a|--add <arg>] [-c|--code <arg>] [-s|--stage <arg>] [-l|--list] [-h|--help]"
     local options=(
-        "-t | --test  <DAY_NUMBER>           Executes given AoC day with samples only."
-        "-r | --run   <DAY_NUMBER>           Executes given AoC day."
-        "-a | --add   <DAY_NUMBER>           Adds a new AoC day."
-        "-c | --code  <DAY_NUMBER>           Opens given AoC day in $AOC_EDITOR."
-        "-s | --stage <DAY_NUMBER>           Git commits given AoC day adding some christmas touch $(get_xmas_emoji)."
+        "-n | --nosamples  <DAY_NUMBER>      Executes given AoC day skipping samples."
+        "-t | --test        <DAY_NUMBER>     Executes given AoC day with samples only."
+        "-r | --run         <DAY_NUMBER>     Executes given AoC day."
+        "-a | --add         <DAY_NUMBER>     Adds a new AoC day."
+        "-c | --code        <DAY_NUMBER>     Opens given AoC day in $AOC_EDITOR."
+        "-s | --stage       <DAY_NUMBER>     Git commits given AoC day adding some christmas touch $(get_xmas_emoji)."
         "-l | --list                         Lists all created AoC days."
         "-h | --help                         Prints help page."
     )
@@ -97,13 +98,19 @@ create_input_data() {
 run_day() {
     local day_path=$(get_day_path "$1")
     print $TEXT_INFO "Running day $(get_day_name "$1") at $day_path"
-    node "$AOC_RUNNER_PATH" "$day_path" "$AOC_DAY_TARGET_FILE"
+    node "$AOC_RUNNER_PATH" "$day_path" "$AOC_DAY_TARGET_FILE" "$2"
+}
+
+run_day_no_samples() {
+    local day_path=$(get_day_path "$1")
+    print $TEXT_INFO "Running day $(get_day_name "$1") at $day_path (no samples)"
+    node "$AOC_RUNNER_PATH" "$day_path" "$AOC_DAY_TARGET_FILE" --nosamples
 }
 
 test_day() {
     local day_path=$(get_day_path "$1")
     print $TEXT_INFO "Running day $(get_day_name "$1") at $day_path (samples only)"
-    node "$AOC_RUNNER_PATH" "$day_path" "$AOC_DAY_TARGET_FILE" --test
+    node "$AOC_RUNNER_PATH" "$day_path" "$AOC_DAY_TARGET_FILE" --samples
 }
 
 list_days() {
@@ -157,7 +164,7 @@ if ! init_env; then
     exit 1
 fi
 
-VALID_ARGS=$(getopt -a -n $0 -o hla:c:s:r:t: --long help,list,add:,code:,stage:,run:,test: -- "$@")
+VALID_ARGS=$(getopt -a -n $0 -o hla:c:s:r:t:n: --long help,list,add:,code:,stage:,run:,test:nosamples: -- "$@")
 if [ $? -ne 0 ]; then
     help
     exit 1
@@ -192,6 +199,10 @@ while :; do
         ;;
     -t | --test)
         test_day "$2"
+        shift 2
+        ;;
+    -n | --nosamples)
+        run_day_no_samples "$2"
         shift 2
         ;;
     --)
