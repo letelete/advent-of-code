@@ -80,32 +80,27 @@ function Computer({ reg: { a, b, c }, verbose }) {
 }
 
 function findMinAToOutputSelf({ reg: { b, c }, program }) {
-  const cache = new Map();
+  // If a1 >= a0 * 8, cmp.run with a=a1 retains the last digit of cmp.out for cmp.run with a=a0.
+  const lowerBound = (a) => 8 * a;
+  const upperBound = (a) => 8 * (a + 1) - 1;
 
-  const lookup = (lowerBound, ptr) => {
-    const hash = `${lowerBound},${ptr}`;
-    if (cache.has(hash)) {
-      return cache.get(hash);
-    }
-
+  const lookup = (a, ptr) => {
     if (ptr < 0) {
-      return lowerBound;
+      return a;
     }
 
-    for (let a = lowerBound * 8; a < (lowerBound + 1) * 8; ++a) {
-      const cmp = Computer({ reg: { a, b, c } });
+    for (let _a = lowerBound(a); _a <= upperBound(a); ++_a) {
+      const cmp = Computer({ reg: { a: _a, b, c } });
       cmp.run(program);
 
       if (cmp.state.out[0] === program[ptr]) {
-        const match = lookup(a, ptr - 1);
-        if (match >= 0) {
-          cache.set(hash, match);
-          return match;
+        const _alookup = lookup(_a, ptr - 1);
+        if (_alookup >= 0) {
+          return _alookup;
         }
       }
     }
 
-    cache.set(hash, -1);
     return -1;
   };
 
