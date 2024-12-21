@@ -5,7 +5,7 @@ function parse(source) {
     .map((e) => e.split(''));
 }
 
-function findTile(grid, char) {
+function findTilePos(grid, char) {
   const row = grid.findIndex((row) => row.includes(char));
   const col = grid[row].findIndex((col) => col === char);
   return [row, col];
@@ -27,105 +27,72 @@ const dirs = {
   ],
 };
 
+function manhattanDist(a, b) {
+  return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+}
+
 function inRange(data, row, col) {
   return row >= 0 && row < data.length && col >= 0 && col < data[0].length;
 }
 
-function hash(row, col) {
-  return `${row},${col}`;
+function getPath(grid, start, [endRow, endCol]) {
+  const path = [start];
+  while (([row, col] = path.at(-1)) && (row !== endRow || col !== endCol)) {
+    const [prevRow, prevCol] = path.at(-2) ?? [-1, -1];
+    const [nextRow, nextCol] = dirs.orthogonal
+      .map(([drow, dcol]) => [row + drow, col + dcol])
+      .find(
+        ([nextRow, nextCol]) =>
+          inRange(grid, nextRow, nextCol) &&
+          grid[nextRow][nextCol] !== symbols.wall &&
+          (nextRow !== prevRow || nextCol !== prevCol)
+      );
+    path.push([nextRow, nextCol]);
+  }
+  return path;
 }
 
-function bfs(grid, start, end, visited, trackPath) {
-  const q = [[0, start]];
-  const source = new Map();
-
-  while (q.length) {
-    const [steps, [row, col]] = q.shift();
-    if (visited.has(hash(row, col))) {
-      continue;
+function cheat(path, at, duration) {
+  const saved = [];
+  for (let i = at + 1; i < path.length; ++i) {
+    const dist = manhattanDist(path[at], path[i]);
+    const save = i - at - dist;
+    if (dist <= duration && save > 0) {
+      saved.push(save);
     }
-    visited.add(hash(row, col));
-
-    if (row === end[0] && col === end[1]) {
-      if (!trackPath) {
-        return steps;
-      }
-      const path = [[row, col]];
-      let head = source.get(hash(row, col));
-      while (head) {
-        path.push(head.split(',').map(Number));
-        head = source.get(head);
-      }
-      return [steps, [...path].reverse()];
-    }
-
-    dirs.orthogonal.forEach(([drow, dcol]) => {
-      const [nextRow, nextCol] = [row + drow, col + dcol];
-      if (
-        inRange(grid, nextRow, nextCol) &&
-        grid[nextRow][nextCol] !== symbols.wall &&
-        !visited.has(hash(nextRow, nextCol))
-      ) {
-        q.push([steps + 1, [nextRow, nextCol]]);
-        source.set(hash(nextRow, nextCol), hash(row, col));
-      }
-    });
   }
+  return saved;
+}
 
-  return -1;
+function getAllCheats(path, maxDuration) {
+  return path.flatMap((_, at, path) => cheat(path, at, maxDuration));
+}
+
+function countOptimalCheats(cheats, minTimeSaved) {
+  return cheats.reduce(
+    (sum, timeSaved) => (timeSaved >= minTimeSaved ? sum + 1 : sum),
+    0
+  );
 }
 
 function part1(data) {
-  const end = findTile(data, symbols.end);
-
-  const [minSteps, path] = bfs(
+  const path = getPath(
     data,
-    findTile(data, symbols.start),
-    end,
-    new Set(),
-    true
+    findTilePos(data, symbols.start),
+    findTilePos(data, symbols.end)
   );
-
-  const visited = new Set();
-  const saves = new Map();
-  console.log({ path });
-  path.forEach(([row, col], steps) => {
-    visited.add(hash(row, col));
-    dirs.orthogonal.forEach(([drow, dcol]) => {
-      const [nextRow, nextCol] = [row + drow, col + dcol];
-      const nextHash = hash(nextRow, nextCol);
-      if (
-        inRange(data, nextRow, nextCol) &&
-        data[nextRow][nextCol] === symbols.wall &&
-        !visited.has(nextHash)
-      ) {
-        const bfsres = bfs(
-          data,
-          [nextRow, nextCol],
-          end,
-          new Set(...visited),
-          false
-        );
-        if (bfsres !== -1) {
-          const candidate = steps + bfsres + 1;
-          if (candidate < minSteps) {
-            saves.set(candidate, (saves.get(candidate) ?? 0) + 1);
-          }
-        }
-      }
-    });
-  });
-
-  return [
-    minSteps,
-    [...saves.entries()]
-      .filter(([k]) => minSteps - k >= 100)
-      .reduce((sum, [_, v]) => sum + v, 0),
-  ];
+  const cheats = getAllCheats(path, 2);
+  return countOptimalCheats(cheats, 100);
 }
 
 function part2(data) {
-  return null;
+  const path = getPath(
+    data,
+    findTilePos(data, symbols.start),
+    findTilePos(data, symbols.end)
+  );
+  const cheats = getAllCheats(path, 20);
+  return countOptimalCheats(cheats, 100);
 }
 
 module.exports = { parse, part1, part2 };
