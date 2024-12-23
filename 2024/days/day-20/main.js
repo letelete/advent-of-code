@@ -58,7 +58,7 @@ function cheat(path, at, duration) {
     const dist = manhattanDist(path[at], path[i]);
     const save = i - at - dist;
     if (dist <= duration && save > 0) {
-      saved.push(save);
+      saved.push([save, { from: at, to: i }]);
     }
   }
   return saved;
@@ -70,7 +70,7 @@ function getAllCheats(path, maxDuration) {
 
 function countOptimalCheats(cheats, minTimeSaved) {
   return cheats.reduce(
-    (sum, timeSaved) => (timeSaved >= minTimeSaved ? sum + 1 : sum),
+    (sum, [timeSaved]) => (timeSaved >= minTimeSaved ? sum + 1 : sum),
     0
   );
 }
@@ -95,4 +95,14 @@ function part2(data) {
   return countOptimalCheats(cheats, 100);
 }
 
-module.exports = { parse, part1, part2 };
+module.exports = {
+  parse,
+  part1,
+  part2,
+  symbols,
+  findTilePos,
+  getPath,
+  cheat,
+  getAllCheats,
+  countOptimalCheats,
+};
