@@ -67,7 +67,7 @@ function findLargestGroup(graph) {
    */
   const choosePivot = (P, X) => {
     const candidates = [...union(P, X)];
-    return candidates[Math.floor(candidates.length / 2)];
+    return candidates[Math.floor(Math.random()) * (candidates.length - 1)];
   };
 
   /**
