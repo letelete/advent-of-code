@@ -6,7 +6,7 @@ A repository containing my [Advent of Code](https://adventofcode.com/) solutions
 
 ### Recent year
 
-[![year 2024, 42 out of 50 stars](https://progress-bar.xyz/42/?title=2024%20•%2042/50%20⭐%20&scale=50&style=square)](./2024)
+[![year 2024, 46 out of 50 stars](https://progress-bar.xyz/46/?title=2024%20•%2046/50%20⭐%20&scale=50&style=square)](./2024)
 
 ### Archive
 
