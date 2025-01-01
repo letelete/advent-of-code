@@ -72,27 +72,35 @@ function processDirectionalInput(input) {
   return generateKeypadSequence(keypad.directional, wp);
 }
 
-function findShortestSequence(code) {
-  const actors = [
-    processNumericCode,
-    processDirectionalInput,
-    processDirectionalInput,
-  ];
+function findShortestSequence(code, actors) {
   return actors.reduce((val, fn) => fn(val), code);
 }
 
-function calculateCodeComplexity(code) {
-  const shortestSequence = findShortestSequence(code);
+function calculateCodeComplexity(code, actors) {
+  const shortestSequence = findShortestSequence(code, actors);
   const numericPart = parseInt(code);
   return shortestSequence.length * numericPart;
 }
 
 function part1(data) {
+  const actors = [
+    processNumericCode,
+    processDirectionalInput,
+    processDirectionalInput,
+  ];
   return data
-    .map(calculateCodeComplexity)
+    .map((code) => calculateCodeComplexity(code, actors))
     .reduce((sum, score) => sum + score, 0);
 }
 
-function part2(data) {}
+function part2(data) {
+  const actors = [
+    processNumericCode,
+    ...new Array(25).fill(processDirectionalInput),
+  ];
+  return data
+    .map((code) => calculateCodeComplexity(code, actors))
+    .reduce((sum, score) => sum + score, 0);
+}
 
 module.exports = { parse, part1, part2 };
