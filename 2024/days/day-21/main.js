@@ -25,24 +25,34 @@ function arePosEq(aRow, aCol, bRow, bCol) {
   return aRow === bRow && aCol === bCol;
 }
 
+const memo = new Map();
+
 function findShortestPath(
   [startRow, startCol],
   [endRow, endCol],
   [blockRow, blockCol]
 ) {
+  const hash = [startRow, startCol, endRow, endCol, blockRow, blockCol].join(
+    ','
+  );
+  if (memo.has(hash)) {
+    return memo.get(hash);
+  }
+
   const rowDelta = endRow - startRow;
   const colDelta = endCol - startCol;
 
-  const rowPath = new Array(Math.abs(rowDelta)).fill(rowDelta > 0 ? 'v' : '^');
-  const colPath = new Array(Math.abs(colDelta)).fill(colDelta > 0 ? '>' : '<');
+  const colPath = (colDelta > 0 ? '>' : '<').repeat(Math.abs(colDelta));
+  const rowPath = (rowDelta > 0 ? 'v' : '^').repeat(Math.abs(rowDelta));
 
   const path =
     (endCol > startCol && !arePosEq(endRow, startCol, blockRow, blockCol)) ||
     arePosEq(startRow, endCol, blockRow, blockCol)
-      ? [...rowPath, ...colPath]
-      : [...colPath, ...rowPath];
+      ? `${rowPath}${colPath}`
+      : `${colPath}${rowPath}`;
 
-  return path.join('');
+  memo.set(hash, path);
+  return path;
 }
 
 function generateKeypadSequence(keypad, waypoints) {
@@ -96,11 +106,15 @@ function part1(data) {
 function part2(data) {
   const actors = [
     processNumericCode,
-    ...new Array(25).fill(processDirectionalInput),
+    processDirectionalInput,
+    processDirectionalInput,
   ];
-  return data
-    .map((code) => calculateCodeComplexity(code, actors))
-    .reduce((sum, score) => sum + score, 0);
+  return data.map((code) => findShortestSequence(code, actors));
 }
+
+// <AAv<AA>>^A<Av>A^A<vAAA^>AvA^A
+// <vA<AA>>^AvAA<^A>Av<<A>>^AvA^Av<<A>>^AA<vA>A^A<A>Av<<A>A^>AAA<Av>A^A
+// <vA<AA>>^AvAA<^A>AAv<<A>A^>Av<<A>>^AvAA<^A>AA<vA^>AAv<<A>^A>AvA^A<vA<AA>>^AvAA<^A>Av<<A>A^>AvA^A<A>Av<<A>>^AvA^A<vA<AA>>^AvA^A<Av>A^AAAv<<A>>^A<vA>A^A<A>Av<<A>A^>A<Av>A^Av<<A>>^AvA^A
+// v<<A>A^>Av<<A>>^AAvAA<^A>A<vA^>AAv<<A>^A>AvA^AA<vA<AA>>^AvA^A<Av>A^A<vA<AA>>^AvAA<^A>A<vA^>AAv<<A>^A>AvA^AAv<<A>A^>A<Av>A^AA<vA<AA>>^AvA<^A>AvA^A<vA^>A<A>Av<<A>A^>Av<<A>>^AAvAA<^A>A<vA^>AAv<<A>^A>AvA^A<vA<AA>>^AvA^A<Av>A^A<vA^>A<A>Av<<A>>^AvA^A<vA<AA>>^AvAA<^A>A<vA^>A<A>Av<<A>A^>Av<<A>>^AAvAA<^A>A<vA^>A<A>Av<<A>>^A<vA>A^A<A>AAA<vA<AA>>^AvAA<^A>Av<<A>A^>AvA^A<A>Av<<A>>^AvA^A<vA<AA>>^AvA^A<Av>A^Av<<A>>^A<vA>A^A<A>A<vA<AA>>^AvAA<^A>A<vA^>A<A>A
 
 module.exports = { parse, part1, part2 };
