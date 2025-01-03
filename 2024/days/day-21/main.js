@@ -15,7 +15,7 @@ const keypad = {
   ],
 };
 
-function findCharPos(keypad, char) {
+function getCharPos(keypad, char) {
   const row = keypad.findIndex((line) => line.includes(char));
   const col = keypad[row].findIndex((cell) => cell === char);
   return [row, col];
@@ -25,9 +25,9 @@ function arePosEq(aRow, aCol, bRow, bCol) {
   return aRow === bRow && aCol === bCol;
 }
 
-const memo = new Map();
+const shortestPathMemo = new Map();
 
-function findShortestPath(
+function getShortestPath(
   [startRow, startCol],
   [endRow, endCol],
   [blockRow, blockCol]
@@ -35,8 +35,8 @@ function findShortestPath(
   const hash = [startRow, startCol, endRow, endCol, blockRow, blockCol].join(
     ','
   );
-  if (memo.has(hash)) {
-    return memo.get(hash);
+  if (shortestPathMemo.has(hash)) {
+    return shortestPathMemo.get(hash);
   }
 
   const rowDelta = endRow - startRow;
@@ -45,76 +45,97 @@ function findShortestPath(
   const colPath = (colDelta > 0 ? '>' : '<').repeat(Math.abs(colDelta));
   const rowPath = (rowDelta > 0 ? 'v' : '^').repeat(Math.abs(rowDelta));
 
-  const path =
+  const isVerticalFirst =
     (endCol > startCol && !arePosEq(endRow, startCol, blockRow, blockCol)) ||
-    arePosEq(startRow, endCol, blockRow, blockCol)
-      ? `${rowPath}${colPath}`
-      : `${colPath}${rowPath}`;
+    arePosEq(startRow, endCol, blockRow, blockCol);
 
-  memo.set(hash, path);
+  const path = isVerticalFirst
+    ? `${rowPath}${colPath}`
+    : `${colPath}${rowPath}`;
+
+  shortestPathMemo.set(hash, path);
   return path;
 }
 
-function generateKeypadSequence(keypad, waypoints) {
+function getKeypadSequence(keypad, waypoints) {
   if (waypoints.length < 2) {
     throw new Error('Expected at least two waypoints');
   }
 
-  const block = findCharPos(keypad, '.');
+  const block = getCharPos(keypad, '.');
 
   return waypoints.reduce((out, end, i, arr) => {
     if (i === 0) {
       return out;
     }
     const start = arr[i - 1];
-    const path = findShortestPath(start, end, block);
+    const path = getShortestPath(start, end, block);
     return `${out}${path}A`;
   }, '');
 }
 
 function processNumericCode(code) {
-  const wp = [...`A${code}`].map((c) => findCharPos(keypad.numeric, c));
-  return generateKeypadSequence(keypad.numeric, wp);
+  const wp = [...`A${code}`].map((c) => getCharPos(keypad.numeric, c));
+  return getKeypadSequence(keypad.numeric, wp);
 }
 
 function processDirectionalInput(input) {
-  const wp = [...`A${input}`].map((c) => findCharPos(keypad.directional, c));
-  return generateKeypadSequence(keypad.directional, wp);
+  const wp = [...`A${input}`].map((c) => getCharPos(keypad.directional, c));
+  return getKeypadSequence(keypad.directional, wp);
 }
 
-function findShortestSequence(code, actors) {
-  return actors.reduce((val, fn) => fn(val), code);
+function findShortestSequenceLength(input, actors) {
+  if (actors < 1) {
+    return input.length;
+  }
+
+  const partialize = (input) =>
+    input
+      .split('A')
+      .slice(0, -1)
+      .map((substr) => `${substr}A`)
+      .reduce((counter, substr) => {
+        counter.set(substr, (counter.get(substr) ?? 0) + 1);
+        return counter;
+      }, new Map());
+
+  let counter = partialize(processDirectionalInput(input));
+
+  while (--actors) {
+    counter = counter.entries().reduce((temp, [substr, count]) => {
+      partialize(processDirectionalInput(substr))
+        .entries()
+        .forEach(([_substr, _count]) => {
+          temp.set(_substr, (temp.get(_substr) ?? 0) + count * _count);
+        });
+      return temp;
+    }, new Map());
+  }
+
+  return counter
+    .entries()
+    .reduce((sum, [key, val]) => sum + key.length * val, 0);
 }
 
 function calculateCodeComplexity(code, actors) {
-  const shortestSequence = findShortestSequence(code, actors);
-  const numericPart = parseInt(code);
-  return shortestSequence.length * numericPart;
+  return (
+    findShortestSequenceLength(processNumericCode(code), actors - 1) *
+    parseInt(code)
+  );
 }
 
-function part1(data) {
-  const actors = [
-    processNumericCode,
-    processDirectionalInput,
-    processDirectionalInput,
-  ];
+function calculateTotalComplexity(data, actors) {
   return data
     .map((code) => calculateCodeComplexity(code, actors))
     .reduce((sum, score) => sum + score, 0);
 }
 
-function part2(data) {
-  const actors = [
-    processNumericCode,
-    processDirectionalInput,
-    processDirectionalInput,
-  ];
-  return data.map((code) => findShortestSequence(code, actors));
+function part1(data) {
+  return calculateTotalComplexity(data, 3);
 }
 
-// <AAv<AA>>^A<Av>A^A<vAAA^>AvA^A
-// <vA<AA>>^AvAA<^A>Av<<A>>^AvA^Av<<A>>^AA<vA>A^A<A>Av<<A>A^>AAA<Av>A^A
-// <vA<AA>>^AvAA<^A>AAv<<A>A^>Av<<A>>^AvAA<^A>AA<vA^>AAv<<A>^A>AvA^A<vA<AA>>^AvAA<^A>Av<<A>A^>AvA^A<A>Av<<A>>^AvA^A<vA<AA>>^AvA^A<Av>A^AAAv<<A>>^A<vA>A^A<A>Av<<A>A^>A<Av>A^Av<<A>>^AvA^A
-// v<<A>A^>Av<<A>>^AAvAA<^A>A<vA^>AAv<<A>^A>AvA^AA<vA<AA>>^AvA^A<Av>A^A<vA<AA>>^AvAA<^A>A<vA^>AAv<<A>^A>AvA^AAv<<A>A^>A<Av>A^AA<vA<AA>>^AvA<^A>AvA^A<vA^>A<A>Av<<A>A^>Av<<A>>^AAvAA<^A>A<vA^>AAv<<A>^A>AvA^A<vA<AA>>^AvA^A<Av>A^A<vA^>A<A>Av<<A>>^AvA^A<vA<AA>>^AvAA<^A>A<vA^>A<A>Av<<A>A^>Av<<A>>^AAvAA<^A>A<vA^>A<A>Av<<A>>^A<vA>A^A<A>AAA<vA<AA>>^AvAA<^A>Av<<A>A^>AvA^A<A>Av<<A>>^AvA^A<vA<AA>>^AvA^A<Av>A^Av<<A>>^A<vA>A^A<A>A<vA<AA>>^AvAA<^A>A<vA^>A<A>A
+function part2(data) {
+  return calculateTotalComplexity(data, 26);
+}
 
 module.exports = { parse, part1, part2 };
