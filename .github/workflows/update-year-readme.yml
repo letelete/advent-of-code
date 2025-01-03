@@ -19,7 +19,7 @@ jobs:
         run: chmod +x .github/scripts/*.sh
 
       - name: Update README with current year
-        run: ./update-year-readme.sh $(date +'%Y')
+        run: ./update-year-readme.sh 2024
         working-directory: .github/scripts
         shell: bash
 
