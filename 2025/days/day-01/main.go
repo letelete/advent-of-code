@@ -55,33 +55,15 @@ func countDialCycles(d *Dial, r *Rotation) int {
 }
 
 func main() {
-	fmt.Println("[test case] part 1:", Part1(DeserializeInput(`L68
-L30
-R48
-L5
-R60
-L55
-L1
-L99
-R14
-L82`)), ", expected: ", 3)
-	fmt.Println("[test case] part 2:", Part2(DeserializeInput(`L68
-L30
-R48
-L5
-R60
-L55
-L1
-L99
-R14
-L82`)), ", expected: ", 6)
-	data := ReadFile("in.txt")
-	fmt.Println("part 1:", Part1(data))
-	fmt.Println("part 2:", Part2(data))
+	testData := readFile("test.txt")
+	fmt.Println("[test case] part 1:", part1(testData), ", expected: ", 3)
+	fmt.Println("[test case] part 2:", part2(testData), ", expected: ", 6)
+	data := readFile("in.txt")
+	fmt.Println("part 1:", part1(data))
+	fmt.Println("part 2:", part2(data))
 }
 
-
-func Part1(data []Rotation) int {
+func part1(data []Rotation) int {
 	dial := Dial{Value: 50, Min: 0, Max: 99}
 	zeroedTimes := 0
 	for _, rotation := range data {
@@ -93,18 +75,17 @@ func Part1(data []Rotation) int {
 	return zeroedTimes
 }
 
-func Part2(data []Rotation) int {
+func part2(data []Rotation) int {
 	dial := Dial{Value: 50, Min: 0, Max: 99}
 	cycles := 0
 	for _, rotation := range data {
 		cycles += countDialCycles(&dial, &rotation)
 		dial.Rotate(&rotation)
 	}
-	return cycles + Part1(data)
+	return cycles + part1(data)
 }
 
-
-func ReadFile(filename string) []Rotation {
+func readFile(filename string) []Rotation {
 	path, err := filepath.Abs(filename)
 	if err != nil {
 		panic(fmt.Sprintf("cannot get absolute path for %q: %v", filename, err))
@@ -126,7 +107,7 @@ func ReadFile(filename string) []Rotation {
 		if line == "" {
 			continue
 		}
-		if next, err := DeserializeInstruction(line); err != nil {
+		if next, err := deserialize(line); err != nil {
 			panic(fmt.Sprintf("cannot deserialize line %q: %v", line, err))
 		} else {
 			out = append(out, next)
@@ -139,29 +120,11 @@ func ReadFile(filename string) []Rotation {
 	return out
 }
 
-func DeserializeInput(input string) []Rotation {
-	lines := strings.Split(input, "\n")
-	out := make([]Rotation, 0, len(lines))
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			panic("empty line in input")
-		}
-		if next, err := DeserializeInstruction(line); err != nil {
-			panic(fmt.Sprintf("cannot deserialize line %q: %v", line, err))
-		} else {
-			out = append(out, next)
-		}
-	}
-	return out
-}
-
-func DeserializeInstruction(instruction string) (Rotation, error) {
-	dir := instruction[0:1]
-	distance, err := strconv.Atoi(instruction[1:])
+func deserialize(raw string) (Rotation, error) {
+	dir := raw[0:1]
+	distance, err := strconv.Atoi(raw[1:])
 	if err != nil {
-		return Rotation{}, fmt.Errorf("cannot convert distance in instruction %q: %v", instruction, err)
+		return Rotation{}, fmt.Errorf("cannot convert distance in instruction %q: %v", raw, err)
 	}
 	return Rotation{dir, distance}, nil
 }
