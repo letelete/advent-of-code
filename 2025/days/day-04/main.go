@@ -38,7 +38,7 @@ func (g *Grid) InBounds(p *Point) bool {
 	return p.row >= 0 && p.row < rows && p.col >= 0 && p.col < cols
 }
 
-func (g *Grid) Walk(startAt *Point, fn func(p *Point)) {
+func (g *Grid) Walk(fn func(p *Point)) {
 	for row := range g.data {
 		for col := range g.data[row] {
 			fn(&Point{row, col})
@@ -90,7 +90,7 @@ func main() {
 
 func part1(g Grid) int {
 	sum := 0
-	g.Walk(&Point{0, 0}, func(p *Point) {
+	g.Walk(func(p *Point) {
 		if g.IsAccessibleByForklift(p) {
 			sum++
 		}
@@ -102,7 +102,7 @@ func part2(g Grid) int {
 	sum := 0
 	for {
 		removed := 0
-		g.Walk(&Point{0, 0}, func(p *Point) {
+		g.Walk(func(p *Point) {
 			if g.IsAccessibleByForklift(p) {
 				g.RemoveRoll(p)
 				sum++
@@ -154,7 +154,7 @@ func runVis(g *Grid) {
 	sum := 0
 	for {
 		removed := 0
-		g.Walk(&Point{0, 0}, func(p *Point) {
+		g.Walk(func(p *Point) {
 			if g.IsAccessibleByForklift(p) {
 				g.RemoveRoll(p)
 				sum++
