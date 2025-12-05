@@ -1,5 +1,9 @@
 # Day-04
 
+## Visualization
+
+![vis](./vis.gif)
+
 ## Benchmark
 
 ```

@@ -2,10 +2,14 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/gdamore/tcell/v2"
 )
 
 type Point struct {
@@ -66,12 +70,22 @@ func (g *Grid) IsAccessibleByForklift(p *Point) bool {
 }
 
 func main() {
+	visualize := flag.Bool("v", false, "run visualization instead :)")
+	flag.Parse()
+
+	data := readFile("in.txt")
+
+	if *visualize {
+		runVis(&data)
+		return
+	}
+
 	testData := readFile("test.txt")
 	fmt.Println("[test case] part 1:", part1(testData), ", expected: ", 13)
 	fmt.Println("[test case] part 2:", part2(testData), ", expected: ", 43)
-	data := readFile("in.txt")
 	fmt.Println("part 1:", part1(data))
 	fmt.Println("part 2:", part2(data))
+
 }
 
 func part1(g Grid) int {
@@ -100,6 +114,59 @@ func part2(g Grid) int {
 		}
 	}
 	return sum
+}
+
+func runVis(g *Grid) {
+	draw := func(screen tcell.Screen, g [][]byte, removed, sum int, p *Point) {
+		screen.Clear()
+		for y, row := range g {
+			for x, b := range row {
+				screen.SetContent(x, y, rune(b), nil, tcell.StyleDefault)
+			}
+		}
+		statsY := len(g) + 1
+
+		writeLine := func(y int, text string) {
+			for i, r := range text {
+				screen.SetContent(i, y, r, nil, tcell.StyleDefault)
+			}
+		}
+
+		writeLine(statsY+0, fmt.Sprintf("Removed this step: %d", removed))
+		writeLine(statsY+1, fmt.Sprintf("Total removed:     %d", sum))
+
+		if p != nil {
+			writeLine(statsY+2, fmt.Sprintf("Current: (%d, %d)", p.row, p.col))
+		}
+		screen.Show()
+	}
+
+	screen, err := tcell.NewScreen()
+	if err != nil {
+		panic(err)
+	}
+	if err := screen.Init(); err != nil {
+		panic(err)
+	}
+	defer screen.Fini()
+	screen.HideCursor()
+
+	sum := 0
+	for {
+		removed := 0
+		g.Walk(&Point{0, 0}, func(p *Point) {
+			if g.IsAccessibleByForklift(p) {
+				g.RemoveRoll(p)
+				sum++
+				removed++
+				draw(screen, g.data, removed, sum, p)
+				time.Sleep(1000)
+			}
+		})
+		if removed == 0 {
+			break
+		}
+	}
 }
 
 func readFile(filename string) Grid {
